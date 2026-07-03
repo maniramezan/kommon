@@ -1,0 +1,65 @@
+name: Release
+
+# Reusable publish workflow. Invoked by release-please.yml once a release is created,
+# and available as a manual fallback via workflow_dispatch. Not triggered by tag pushes:
+# release-please tags with a token that does not fire tag-push workflows.
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Tag to build and publish (e.g. v0.1.0)
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to build and publish (e.g. v0.1.0)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v6
+
+      # Fail fast if the resolved tag doesn't match the version in the release-please manifest
+      # (the single source of truth), so we never publish a version that's already on Maven Central.
+      - name: Verify tag matches manifest version
+        env:
+          TAG_INPUT: ${{ inputs.tag }}
+        run: |
+          TAG="${TAG_INPUT#v}"
+          VER="$(sed -nE 's/.*"\."[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' .release-please-manifest.json | tr -d '[:space:]')"
+          echo "Tag version: $TAG | manifest version: $VER"
+          if [ "$TAG" != "$VER" ]; then
+            echo "::error::Tag $TAG_INPUT does not match .release-please-manifest.json version=$VER."
+            exit 1
+          fi
+
+      - name: Check
+        run: ./gradlew check
+
+      - name: Publish to Maven Central
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+        run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
+          generate_release_notes: true
