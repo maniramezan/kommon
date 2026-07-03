@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment-retry.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
@@ -35,5 +35,22 @@ jobs:
         with:
           path: build/dokka/html
 
+      # actions/deploy-pages occasionally fails with a transient "Deployment
+      # failed, try again later" from GitHub's Pages API even with no real
+      # concurrency (observed in practice on this repo). Retry once after a
+      # short backoff before giving up.
       - id: deployment
         uses: actions/deploy-pages@v5
+        continue-on-error: true
+
+      - name: Back off before retrying the Pages deployment
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 30
+
+      - id: deployment-retry
+        if: steps.deployment.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+
+      - name: Fail the job if every deploy attempt failed
+        if: always() && steps.deployment.outcome == 'failure' && steps.deployment-retry.outcome == 'failure'
+        run: exit 1
