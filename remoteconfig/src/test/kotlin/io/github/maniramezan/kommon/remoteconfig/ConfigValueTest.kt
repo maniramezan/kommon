@@ -30,6 +30,8 @@ class ConfigValueTest {
         assertEquals(5.0, ConfigValue.Int(5).doubleValue)
         assertEquals(2, ConfigValue.Double(2.9).intValue)
         assertEquals(false, ConfigValue.Double(0.0).boolValue)
+        assertEquals("2.9", ConfigValue.Double(2.9).stringValue)
+        assertEquals(2.9, ConfigValue.Double(2.9).doubleValue)
     }
 }
 
@@ -56,5 +58,11 @@ class ConfigKeyTest {
     @Test
     fun `value source has three variants`() {
         assertEquals(listOf(ValueSource.DEFAULT, ValueSource.REMOTE, ValueSource.OVERRIDE), ValueSource.entries)
+    }
+
+    @Test
+    fun `allowedValues defaults to null when omitted`() {
+        val key = ConfigKey(id = "flag", description = "d", valueType = ConfigValueType.BOOL, defaultValue = ConfigValue.Bool(false))
+        assertEquals(null, key.allowedValues)
     }
 }

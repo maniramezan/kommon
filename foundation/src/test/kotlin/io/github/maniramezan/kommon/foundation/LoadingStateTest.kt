@@ -51,6 +51,20 @@ class LoadingErrorTest {
     }
 
     @Test
+    fun `429 message maps to a retryable rate-limit error`() {
+        val error = LoadingError.from(RuntimeException("429 Too Many Requests"))
+        assertTrue(error.isRetryable)
+        assertTrue(error.message.contains("Too many requests"))
+    }
+
+    @Test
+    fun `5xx server message maps to a retryable server error`() {
+        val error = LoadingError.from(RuntimeException("500 Internal Server Error"))
+        assertTrue(error.isRetryable)
+        assertTrue(error.message.contains("our end"))
+    }
+
+    @Test
     fun `wrapped network cause is unwrapped from nested exceptions`() {
         val wrapped = RuntimeException("wrapper", java.net.ConnectException())
         val error = LoadingError.from(wrapped)

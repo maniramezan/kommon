@@ -64,15 +64,24 @@ class CompositeAnalyticsClientTest {
         val composite = CompositeAnalyticsClient(listOf(first, second))
         val event = AnalyticsEvent("test_event")
 
+        composite.initialize("token", "https://example.com")
         composite.track(event)
         composite.identify("user-1")
+        composite.setUserProperties(mapOf("plan" to "free"))
+        composite.increment("count", 1.0)
+        composite.trackScreen("home", mapOf("source" to "deeplink"))
         composite.reset()
+        composite.flush()
 
-        verify { first.track(event) }
-        verify { second.track(event) }
-        verify { first.identify("user-1") }
-        verify { second.identify("user-1") }
-        verify { first.reset() }
-        verify { second.reset() }
+        for (client in listOf(first, second)) {
+            verify { client.initialize("token", "https://example.com") }
+            verify { client.track(event) }
+            verify { client.identify("user-1") }
+            verify { client.setUserProperties(mapOf("plan" to "free")) }
+            verify { client.increment("count", 1.0) }
+            verify { client.trackScreen("home", mapOf("source" to "deeplink")) }
+            verify { client.reset() }
+            verify { client.flush() }
+        }
     }
 }
