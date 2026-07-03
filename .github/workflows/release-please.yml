@@ -20,6 +20,9 @@ jobs:
     # On workflow_run: only proceed when CI passed. On manual dispatch: always run.
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    # RELEASE_PLEASE_APP_ID / RELEASE_PLEASE_APP_PRIVATE_KEY are stored as environment
+    # secrets under the "secrets" environment rather than repository secrets.
+    environment: secrets
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}

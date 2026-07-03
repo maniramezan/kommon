@@ -23,6 +23,9 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # MAVEN_CENTRAL_USERNAME / MAVEN_CENTRAL_PASSWORD are stored as environment secrets
+    # under the "secrets" environment rather than repository secrets.
+    environment: secrets
     steps:
       - uses: actions/checkout@v6
         with:
