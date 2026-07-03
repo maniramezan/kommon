@@ -54,6 +54,18 @@ class AuthSessionInitializerTest {
         }
 
     @Test
+    fun `warmUp logs an error when no token is available after warm-up`() =
+        runTest {
+            every { authRepository.currentUser } returns null
+            coEvery { authTokenProvider.idToken(any()) } returns null
+            initializer = AuthSessionInitializer(authRepository, authTokenProvider, sessionStore)
+
+            initializer.warmUp()
+
+            verify { sessionStore.record(AuthSessionHint(hasAccount = false)) }
+        }
+
+    @Test
     fun `observing auth changes records a hint for every emission`() =
         runTest {
             every { authRepository.currentUser } returns null

@@ -30,4 +30,20 @@ class AnalyticsPayloadSanitizerTest {
         val sanitized = AnalyticsPayloadSanitizer.sanitizeUserPropertyValue("x".repeat(100))
         assertEquals(36, sanitized.length)
     }
+
+    @Test
+    fun `sanitizeUserProperties truncates every value in the map`() {
+        val sanitized = AnalyticsPayloadSanitizer.sanitizeUserProperties(mapOf("plan" to "x".repeat(100), "tier" to 5))
+        assertEquals(36, sanitized.getValue("plan").length)
+        assertEquals("5", sanitized.getValue("tier"))
+    }
+
+    @Test
+    fun `non-primitive event values are stringified and truncated`() {
+        data class Custom(
+            val value: String,
+        )
+        val sanitized = AnalyticsPayloadSanitizer.sanitizeEventProperties(mapOf("obj" to Custom("x".repeat(150))))
+        assertEquals(100, (sanitized["obj"] as String).length)
+    }
 }
