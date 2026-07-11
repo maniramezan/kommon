@@ -8,7 +8,7 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   # Cancel superseded runs on PR branches, but never on main: a cancelled main run reports
-  # conclusion != success, which would skip the release-please workflow and stall a release.
+  # conclusion != success, which would skip the post-CI release workflow and stall a release.
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
