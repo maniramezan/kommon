@@ -10,17 +10,10 @@ plugins {
     alias(libs.plugins.maven.publish) apply false
 }
 
-// Single source of truth for the published version: the release-please manifest
-// (`.release-please-manifest.json`). release-please bumps it in the release PR; Gradle reads it
-// here so the version lives in exactly one file.
+// Single source of truth for the published version: the release workflow injects VERSION_NAME
+// from the computed SemVer tag. Local and CI builds without a release tag use a snapshot version.
 val libraryVersion: String =
-    providers
-        .fileContents(layout.projectDirectory.file(".release-please-manifest.json"))
-        .asText
-        .map { json ->
-            Regex("\"\\.\"\\s*:\\s*\"([^\"]+)\"").find(json)?.groupValues?.get(1)
-                ?: error("No \".\" version found in .release-please-manifest.json")
-        }.get()
+    providers.gradleProperty("VERSION_NAME").orElse("0.0.0-SNAPSHOT").get()
 
 allprojects {
     group = providers.gradleProperty("GROUP").get()

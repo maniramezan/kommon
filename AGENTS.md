@@ -117,16 +117,16 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
 
 ## Publishing
 
-- Version is sourced from `.release-please-manifest.json` (single source of truth); release-please
-  owns bumping it via the release PR. Do not hand-edit the version elsewhere.
+- Version is sourced from the release workflow's computed bare SemVer tag. Release automation
+  injects `VERSION_NAME` during publish; do not hardcode or hand-edit a release version elsewhere.
 - `GROUP=io.github.maniramezan.kommon` and POM metadata live in `gradle.properties`.
 - `com.vanniktech.maven-publish` + Dokka are applied automatically to every `com.android.library`
   module via the root `build.gradle.kts` `subprojects` block — new modules don't need to opt in
   manually, just add them to the `dokka(project(":..."))` list in the root `build.gradle.kts` so
   their KDoc is included in the aggregated site.
-- CI/release workflow (`.github/workflows/ci.yml`, `release-please.yml`, `release.yml`,
-  `docs.yml`) mirrors `kenwork`/`ComposeUIComponents` exactly. `release.yml` requires four repo
-  secrets to actually publish to Maven Central: `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`,
+- CI/release workflow (`.github/workflows/ci.yml`, `release.yml`, `docs.yml`) mirrors the direct
+  post-CI auto-release setup used in sibling repos. `release.yml` requires four repo secrets to
+  actually publish to Maven Central: `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`,
   `SIGNING_IN_MEMORY_KEY`, `SIGNING_IN_MEMORY_KEY_PASSWORD`.
 - Remote: `https://github.com/maniramezan/kommon`.
 

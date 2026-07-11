@@ -1,68 +1,156 @@
 name: Release
 
-# Reusable publish workflow. Invoked by release-please.yml once a release is created,
-# and available as a manual fallback via workflow_dispatch. Not triggered by tag pushes:
-# release-please tags with a token that does not fire tag-push workflows.
+# Publishes a Maven Central release and GitHub Release whenever the CI workflow succeeds on main.
+# New tags are bare SemVer with no "v" prefix. Legacy v-prefixed tags are still recognized when
+# computing the next version. Every merged PR that lands on main produces a release: breaking
+# changes and features bump normally; all other merged changes bump patch.
 on:
-  workflow_call:
-    inputs:
-      tag:
-        description: Tag to build and publish (e.g. v0.1.0)
-        required: true
-        type: string
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
-      tag:
-        description: Tag to build and publish (e.g. v0.1.0)
-        required: true
+      force_version:
+        description: Exact version to publish, for example 0.2.0
+        required: false
         type: string
 
 permissions:
   contents: write
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
+    name: Publish Maven Central and GitHub Release
     runs-on: ubuntu-latest
-    # MAVEN_CENTRAL_USERNAME / MAVEN_CENTRAL_PASSWORD are stored as environment secrets
-    # under the "secrets" environment rather than repository secrets.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     environment: secrets
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6.0.3
         with:
-          ref: ${{ inputs.tag }}
-      - uses: actions/setup-java@v5
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          fetch-depth: 0
+
+      - name: Compute next version
+        id: version
+        env:
+          FORCE_VERSION: ${{ github.event.inputs.force_version }}
+        run: |
+          set -euo pipefail
+
+          latest_tag="$(git tag --list --sort=-v:refname | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -n1 || true)"
+
+          if [ -n "${FORCE_VERSION:-}" ]; then
+            next="${FORCE_VERSION#v}"
+            if git rev-parse --verify --quiet "refs/tags/${next}"; then
+              echo "Tag ${next} already exists; nothing to publish."
+              echo "release=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Forcing version $next"
+            echo "tag=$next" >> "$GITHUB_OUTPUT"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -z "$latest_tag" ]; then
+            echo "No existing tags; bootstrapping 0.1.0"
+            echo "tag=0.1.0" >> "$GITHUB_OUTPUT"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Latest tag: $latest_tag"
+          version="${latest_tag#v}"
+          major="${version%%.*}"
+          rest="${version#*.}"
+          minor="${rest%%.*}"
+          patch="${rest#*.}"
+
+          range="${latest_tag}..HEAD"
+          if [ -z "$(git log "$range" --format='%H')" ]; then
+            echo "No commits since $latest_tag; nothing to release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          breaking=false
+          feat=false
+          if git log "$range" --format='%s' | grep -Eq '^[a-zA-Z]+(\([^)]+\))?!:'; then breaking=true; fi
+          if git log "$range" --format='%B' | grep -Eq 'BREAKING[ -]CHANGE'; then breaking=true; fi
+          if git log "$range" --format='%s' | grep -Eq '^feat(\([^)]+\))?!?:'; then feat=true; fi
+
+          bump="patch"
+          if [ "$major" -eq 0 ]; then
+            if [ "$breaking" = true ] || [ "$feat" = true ]; then bump="minor"; fi
+          else
+            if [ "$breaking" = true ]; then bump="major"
+            elif [ "$feat" = true ]; then bump="minor"
+            fi
+          fi
+
+          case "$bump" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
+
+          next="${major}.${minor}.${patch}"
+          if git rev-parse --verify --quiet "refs/tags/${next}"; then
+            echo "Tag ${next} already exists; nothing to publish."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Bump: $bump -> $next"
+          echo "tag=$next" >> "$GITHUB_OUTPUT"
+          echo "release=true" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Java
+        if: steps.version.outputs.release == 'true'
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
-      - uses: gradle/actions/setup-gradle@v6
 
-      # Fail fast if the resolved tag doesn't match the version in the release-please manifest
-      # (the single source of truth), so we never publish a version that's already on Maven Central.
-      - name: Verify tag matches manifest version
-        env:
-          TAG_INPUT: ${{ inputs.tag }}
-        run: |
-          TAG="${TAG_INPUT#v}"
-          VER="$(sed -nE 's/.*"\."[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' .release-please-manifest.json | tr -d '[:space:]')"
-          echo "Tag version: $TAG | manifest version: $VER"
-          if [ "$TAG" != "$VER" ]; then
-            echo "::error::Tag $TAG_INPUT does not match .release-please-manifest.json version=$VER."
-            exit 1
-          fi
+      - name: Set up Gradle
+        if: steps.version.outputs.release == 'true'
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Check
+        if: steps.version.outputs.release == 'true'
+        env:
+          ORG_GRADLE_PROJECT_VERSION_NAME: ${{ steps.version.outputs.tag }}
         run: ./gradlew check
 
       - name: Publish to Maven Central
+        if: steps.version.outputs.release == 'true'
         env:
+          ORG_GRADLE_PROJECT_VERSION_NAME: ${{ steps.version.outputs.tag }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
         run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
 
-      - uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ inputs.tag }}
-          name: ${{ inputs.tag }}
-          generate_release_notes: true
+      - name: Create tag and GitHub Release
+        if: steps.version.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "$TAG"
+          git push origin "$TAG"
+
+          gh release create "$TAG" --title "$TAG" --generate-notes
