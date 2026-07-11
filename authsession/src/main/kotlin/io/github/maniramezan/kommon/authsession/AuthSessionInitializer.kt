@@ -4,13 +4,14 @@ import io.github.maniramezan.kommon.foundation.KommonLogger
 import io.github.maniramezan.kommon.foundation.NoOpLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
  * Warms the auth session at cold start: mints/refreshes a token before the first API request can
  * race an unauthenticated call, then keeps [sessionStore] updated as [AuthRepository.authStateFlow]
- * changes. Call [start] once, early in app startup (this class owns its own background scope).
+ * changes. Call [start] early in app startup and [stop] when its owning app scope is torn down.
  */
 public class AuthSessionInitializer(
     private val authRepository: AuthRepository,
@@ -19,11 +20,24 @@ public class AuthSessionInitializer(
     private val logger: KommonLogger = NoOpLogger,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
+    private var observationJob: Job? = null
+
+    /** Starts session warming and observation. Repeated calls while running are ignored. */
+    @Synchronized
     public fun start() {
-        scope.launch {
-            warmUp()
-            observeAuthChanges()
-        }
+        if (observationJob?.isActive == true) return
+        observationJob =
+            scope.launch {
+                warmUp()
+                observeAuthChanges()
+            }
+    }
+
+    /** Stops this initializer's work without cancelling the caller-owned [scope]. */
+    @Synchronized
+    public fun stop() {
+        observationJob?.cancel()
+        observationJob = null
     }
 
     internal suspend fun warmUp() {

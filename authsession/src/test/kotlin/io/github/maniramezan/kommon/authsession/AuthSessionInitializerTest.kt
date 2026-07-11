@@ -85,4 +85,22 @@ class AuthSessionInitializerTest {
 
             verify { sessionStore.record(AuthSessionHint(hasAccount = true)) }
         }
+
+    @Test
+    fun `start is idempotent and stop cancels observation`() =
+        runTest {
+            every { authRepository.currentUser } returns null
+            coEvery { authTokenProvider.idToken(any()) } returns "token"
+            initializer = AuthSessionInitializer(authRepository, authTokenProvider, sessionStore, scope = backgroundScope)
+
+            initializer.start()
+            initializer.start()
+            testScheduler.runCurrent()
+            initializer.stop()
+            authStateFlow.emit(AuthUser(uid = "u3", isAnonymous = false))
+            testScheduler.runCurrent()
+
+            verify(exactly = 1) { sessionStore.record(AuthSessionHint(hasAccount = false)) }
+            verify(exactly = 0) { sessionStore.record(AuthSessionHint(hasAccount = true)) }
+        }
 }
