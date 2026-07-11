@@ -6,6 +6,7 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class InMemoryAnalyticsDebugStoreTest {
     @Test
@@ -26,6 +27,21 @@ class InMemoryAnalyticsDebugStoreTest {
         store.append(AnalyticsDebugEntry(timestampMs = 1L, action = AnalyticsDebugAction.TRACK, name = "a", properties = emptyMap()))
         store.clear()
         assertEquals(emptyList(), store.entries.value)
+    }
+
+    @Test
+    fun `append evicts the oldest entry when capacity is reached`() {
+        val store = InMemoryAnalyticsDebugStore(capacity = 2)
+        store.append(AnalyticsDebugEntry(timestampMs = 1L, action = AnalyticsDebugAction.TRACK, name = "a", properties = emptyMap()))
+        store.append(AnalyticsDebugEntry(timestampMs = 2L, action = AnalyticsDebugAction.TRACK, name = "b", properties = emptyMap()))
+        store.append(AnalyticsDebugEntry(timestampMs = 3L, action = AnalyticsDebugAction.TRACK, name = "c", properties = emptyMap()))
+
+        assertEquals(listOf("b", "c"), store.entries.value.map { it.name })
+    }
+
+    @Test
+    fun `zero capacity is rejected`() {
+        assertFailsWith<IllegalArgumentException> { InMemoryAnalyticsDebugStore(capacity = 0) }
     }
 }
 

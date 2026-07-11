@@ -1,5 +1,6 @@
 package io.github.maniramezan.kommon.sync
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -46,8 +47,8 @@ public class SyncEngine(
     @Suppress("TooGenericExceptionCaught") // Any failure must reach telemetry, then rethrow.
     private suspend fun <E : SyncableEntity<E>, U, D, C> drive(adapter: SyncResourceAdapter<E, U, D, C>, limit: Int) {
         val startedAt = System.currentTimeMillis()
-        telemetry.onSyncStarted(adapter.resourceName)
         try {
+            reportTelemetry { telemetry.onSyncStarted(adapter.resourceName) }
             val pendingByKey = adapter.pending().associateBy { adapter.syncKey(it) }
             var response = push(adapter, pendingByKey.values.toList(), limit)
             if (response.fullResyncRequired) response = fullResync(adapter, limit)
@@ -66,18 +67,20 @@ public class SyncEngine(
             }
             if (fullMode) reconcileFullSnapshot(adapter, activeKeys)
 
-            telemetry.onSyncCompleted(
-                adapter.resourceName,
-                response.mode,
-                response.applied.size,
-                changeCount,
-                System.currentTimeMillis() - startedAt,
-            )
+            reportTelemetry {
+                telemetry.onSyncCompleted(
+                    adapter.resourceName,
+                    response.mode,
+                    response.applied.size,
+                    changeCount,
+                    System.currentTimeMillis() - startedAt,
+                )
+            }
         } catch (throwable: Throwable) {
             // Surface any failure to telemetry, then rethrow so syncAll's per-resource
             // isolation can record it without aborting the other resources.
             val errorType = throwable::class.simpleName ?: "Unknown"
-            telemetry.onSyncFailed(adapter.resourceName, errorType, throwable.message)
+            reportTelemetry { telemetry.onSyncFailed(adapter.resourceName, errorType, throwable.message) }
             throw throwable
         }
     }
@@ -102,7 +105,7 @@ public class SyncEngine(
         limit: Int,
     ): SyncResponse<C> {
         adapter.purgeSynced()
-        telemetry.onFullResync(adapter.resourceName)
+        reportTelemetry { telemetry.onFullResync(adapter.resourceName) }
         return adapter.api(SyncRequest(since = null, limit = limit))
     }
 
@@ -118,7 +121,7 @@ public class SyncEngine(
             if (current.localUpdatedAt != snapshot.localUpdatedAt) return@forEach
             adapter.upsert(current.applyOutcome(ack))
             if (ack.status == SyncAppliedRecord.STATUS_BLOCKED || ack.status == SyncAppliedRecord.STATUS_REJECTED) {
-                telemetry.onItemBlocked(adapter.resourceName, ack.status, ack.reason)
+                reportTelemetry { telemetry.onItemBlocked(adapter.resourceName, ack.status, ack.reason) }
             }
         }
     }
@@ -167,6 +170,13 @@ public class SyncEngine(
                 metadataExtra = response.metadataExtra,
             ),
         )
+    }
+
+    /** Telemetry is observational and must never affect sync persistence or retry behavior. */
+    private fun reportTelemetry(block: () -> Unit) {
+        runCatching(block).onFailure { error ->
+            if (error is CancellationException) throw error
+        }
     }
 
     public companion object {

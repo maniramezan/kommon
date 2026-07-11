@@ -2,6 +2,7 @@ package io.github.maniramezan.kommon.sync
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
@@ -170,5 +171,22 @@ class SyncEngineTest {
 
             assertEquals(true, result.isFailure)
             coVerify { api.sync(any()) } // healthy resource still ran
+        }
+
+    @Test
+    fun `telemetry failures do not fail sync`() =
+        runTest {
+            val adapter = TestResourceAdapter(api)
+            val telemetry = mockk<SyncTelemetrySink>(relaxed = true)
+            engine = SyncEngine(cursorStore, telemetry)
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            coEvery { api.sync(any()) } returns testResponse()
+            every { telemetry.onSyncStarted(adapter.resourceName) } throws IllegalStateException("telemetry unavailable")
+            every { telemetry.onSyncCompleted(any(), any(), any(), any(), any()) } throws IllegalStateException("telemetry unavailable")
+
+            val result = engine.sync(adapter)
+
+            assertEquals(true, result.isSuccess)
+            coVerify { api.sync(any()) }
         }
 }
