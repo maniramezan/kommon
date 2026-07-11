@@ -39,6 +39,7 @@ public class LocalOverrideStore(
         value: ConfigValue,
     ) {
         if (!isDebug) return
+        require(key.accepts(value)) { "Override value does not match config key '${key.id}'" }
         prefs.edit().apply {
             when (value) {
                 is ConfigValue.Bool -> putBoolean(key.id, value.value)
@@ -72,3 +73,12 @@ public class LocalOverrideStore(
         public const val DEFAULT_PREFS_NAME: String = "io.github.maniramezan.kommon.remoteconfig.overrides"
     }
 }
+
+private fun ConfigKey.accepts(value: ConfigValue): Boolean =
+    when (valueType) {
+        ConfigValueType.BOOL -> value is ConfigValue.Bool
+        ConfigValueType.STRING ->
+            value is ConfigValue.StringVal && (allowedValues?.contains(value.value) != false)
+        ConfigValueType.INT -> value is ConfigValue.Int
+        ConfigValueType.DOUBLE -> value is ConfigValue.Double
+    }

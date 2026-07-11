@@ -35,8 +35,19 @@ public interface AnalyticsDebugStore {
     public fun clear()
 }
 
-/** In-memory [AnalyticsDebugStore] backed by a [StateFlow]. */
-public class InMemoryAnalyticsDebugStore : AnalyticsDebugStore {
+/**
+ * Bounded in-memory [AnalyticsDebugStore] backed by a [StateFlow].
+ *
+ * The oldest entry is evicted when [capacity] is reached, preventing debug capture from growing
+ * for the entire app process lifetime.
+ */
+public class InMemoryAnalyticsDebugStore(
+    private val capacity: Int = DEFAULT_CAPACITY,
+) : AnalyticsDebugStore {
+    init {
+        require(capacity > 0) { "capacity must be greater than zero" }
+    }
+
     private val _entries = MutableStateFlow<List<AnalyticsDebugEntry>>(emptyList())
     private val nextId = AtomicLong(1L)
 
@@ -44,10 +55,14 @@ public class InMemoryAnalyticsDebugStore : AnalyticsDebugStore {
 
     override fun append(entry: AnalyticsDebugEntry) {
         val entryWithId = entry.copy(id = nextId.getAndIncrement())
-        _entries.update { current -> current + entryWithId }
+        _entries.update { current -> (current + entryWithId).takeLast(capacity) }
     }
 
     override fun clear() {
         _entries.value = emptyList()
+    }
+
+    public companion object {
+        public const val DEFAULT_CAPACITY: Int = 100
     }
 }
