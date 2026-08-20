@@ -69,11 +69,11 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   (default `NoOpLogger`) from `:foundation` rather than importing Timber/android.util.Log directly.
   `TimberLogger` is the one concrete bridge implementation, and it lives in `:foundation` precisely
   so consumers can opt in without forcing Timber on everyone else.
-- **No networking or Compose UI here**: HTTP transport belongs in `kenwork`
-  (`io.github.maniramezan.kenwork:*`) and Compose design-system primitives belong in
-  `ComposeUIComponents` (`io.github.maniramezan.compose:*`). Do not duplicate either concern in
-  this repo — if something looks like it belongs in one of those, extract it there instead
-  (`ComposeUIComponents` can depend on/reference `kommon` where useful).
+- **No networking or rendered UI here**: HTTP transport belongs in `kenwork`
+  (`io.github.maniramezan.kenwork:*`). Platform-neutral design-system values and contracts live in
+  `:design-system`; Compose adapters and rendered components live in `KMPComponents`. Keep `kommon`
+  free of Compose types (`Color`, `Dp`, `TextStyle`, and composables) so Android, desktop, and iOS
+  consumers can interpret the same tokens without taking a UI dependency.
 - The library is pre-1.0 (`0.1.0` and climbing); breaking API changes are still acceptable but
   should be called out explicitly, since Novalingo is the intended first consumer.
 
