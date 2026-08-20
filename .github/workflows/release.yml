@@ -45,12 +45,20 @@ jobs:
         run: |
           set -euo pipefail
 
-          latest_tag="$(git tag --list --sort=-v:refname | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -n1 || true)"
+          latest_version="$(git tag --list | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//' | sort -V | tail -n1 || true)"
+          latest_tag=""
+          if [ -n "$latest_version" ]; then
+            if git rev-parse --verify --quiet "refs/tags/${latest_version}"; then
+              latest_tag="$latest_version"
+            else
+              latest_tag="v${latest_version}"
+            fi
+          fi
 
           if [ -n "${FORCE_VERSION:-}" ]; then
             next="${FORCE_VERSION#v}"
-            if git rev-parse --verify --quiet "refs/tags/${next}"; then
-              echo "Tag ${next} already exists; nothing to publish."
+            if git rev-parse --verify --quiet "refs/tags/${next}" || git rev-parse --verify --quiet "refs/tags/v${next}"; then
+              echo "Version ${next} already has a tag; nothing to publish."
               echo "release=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi
@@ -103,8 +111,8 @@ jobs:
           esac
 
           next="${major}.${minor}.${patch}"
-          if git rev-parse --verify --quiet "refs/tags/${next}"; then
-            echo "Tag ${next} already exists; nothing to publish."
+          if git rev-parse --verify --quiet "refs/tags/${next}" || git rev-parse --verify --quiet "refs/tags/v${next}"; then
+            echo "Version ${next} already has a tag; nothing to publish."
             echo "release=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
