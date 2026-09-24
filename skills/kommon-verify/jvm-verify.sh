@@ -6,11 +6,11 @@
 # with the repo's detekt config. It does NOT run Android lint, Robolectric tests, JaCoCo, or the
 # :design-system KMP build — say so when reporting results.
 #
-# Usage: .claude/skills/kommon-verify/jvm-verify.sh [workdir]   (needs a `gradle` 8.14+ on PATH)
+# Usage: skills/kommon-verify/jvm-verify.sh [workdir]   (needs a `gradle` 8.14+ on PATH)
 set -euo pipefail
 
-repo="$(cd "$(dirname "$0")/../../.." && pwd)"
-skill="$repo/.claude/skills/kommon-verify"
+repo="$(cd "$(dirname "$0")/../.." && pwd)"
+skill="$repo/skills/kommon-verify"
 work="${1:-${TMPDIR:-/tmp}/kommon-jvm-verify}"
 catalog="$repo/gradle/libs.versions.toml"
 ver() { sed -n "s/^$1 = \"\(.*\)\"/\1/p" "$catalog"; }

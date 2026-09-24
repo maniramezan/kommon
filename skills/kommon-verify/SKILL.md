@@ -25,7 +25,7 @@ Symptom: `./gradlew` fails at settings/build-logic with `Could not resolve ... d
 Run:
 
 ```bash
-.claude/skills/kommon-verify/jvm-verify.sh [scratch-dir]   # needs `gradle` 8.14+ on PATH
+skills/kommon-verify/jvm-verify.sh [scratch-dir]   # needs `gradle` 8.14+ on PATH
 ```
 
 It builds all `kommon.android.library` modules' sources as a single Kotlin/JVM project against

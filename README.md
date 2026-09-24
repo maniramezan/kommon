@@ -173,4 +173,4 @@ site.
 
 Contributor and AI-agent guidance lives in [`AGENTS.md`](AGENTS.md); repo-specific workflows
 (adding a module, extracting code from an app, changing the sync engine, verifying changes) are
-packaged as skills under [`.claude/skills/`](.claude/skills).
+packaged as skills under [`skills/`](skills/).

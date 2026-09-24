@@ -12,7 +12,7 @@ this file.
 
 ## Required Skill Loading
 
-Repo-local skills live in `.claude/skills/` and encode this repo's own workflows — load the
+Repo-local skills live in `skills/` for all agents and encode this repo's own workflows — load the
 matching one first:
 
 - `kommon-new-module` — adding a module (settings, Dokka list, README/AGENTS tables, fakes).
