@@ -27,16 +27,19 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v6
 
-      - name: Check (tests, detekt, ktlint, lint, coverage gate)
-        run: ./gradlew check
+      - name: Check and build API docs
+        run: ./gradlew check dokkaGenerate
 
-      - name: Build API docs
-        run: ./gradlew dokkaGenerate
+      - name: Upload API docs for Pages
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: docs-site
+          path: build/dokka/html/
+          if-no-files-found: error
 
       - uses: actions/upload-artifact@v7.0.1
         if: always()
         with:
           name: reports
-          path: |
-            **/build/reports/**
-            build/dokka/html/**
+          path: '**/build/reports/**'
