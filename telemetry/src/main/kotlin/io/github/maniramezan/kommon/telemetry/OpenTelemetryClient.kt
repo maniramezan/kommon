@@ -81,7 +81,7 @@ public const val ERROR_TYPE_ATTRIBUTE: String = "error.type"
  * ```
  */
 @Suppress("TooGenericExceptionCaught") // Record every failure, then rethrow it unchanged.
-public inline fun <T> OpenTelemetryClient.trace(
+public fun <T> OpenTelemetryClient.trace(
     name: String,
     kind: String = SpanKind.INTERNAL,
     attributes: Map<String, Any> = emptyMap(),

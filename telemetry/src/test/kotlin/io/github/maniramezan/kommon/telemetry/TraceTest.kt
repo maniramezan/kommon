@@ -23,10 +23,50 @@ class TraceTest {
     }
 
     @Test
+    fun `successful block with default kind and attributes`() {
+        spans.clear()
+        val result = client.trace("load_default") { "done" }
+
+        assertEquals("done", result)
+        val span = spans.single()
+        assertEquals("load_default", span.name)
+        assertEquals(SpanKind.INTERNAL, span.kind)
+        assertEquals(SpanStatus.OK, span.status)
+        assertEquals(emptyMap<String, Any>(), span.attributes)
+        assertTrue(span.durationMs >= 0)
+    }
+
+    @Test
+    fun `successful block with default attributes only`() {
+        spans.clear()
+        val result = client.trace("load_attr", SpanKind.SERVER) { "done" }
+
+        assertEquals("done", result)
+        val span = spans.single()
+        assertEquals("load_attr", span.name)
+        assertEquals(SpanKind.SERVER, span.kind)
+        assertEquals(SpanStatus.OK, span.status)
+        assertEquals(emptyMap<String, Any>(), span.attributes)
+        assertTrue(span.durationMs >= 0)
+    }
+
+    @Test
     fun `failing block records an ERROR span with the error type and rethrows`() {
         assertFailsWith<IllegalStateException> { client.trace<Unit>("load") { throw IllegalStateException("boom") } }
 
         val span = spans.single()
+        assertEquals(SpanStatus.ERROR, span.status)
+        assertEquals("java.lang.IllegalStateException", span.attributes[ERROR_TYPE_ATTRIBUTE])
+    }
+
+    @Test
+    fun `failing block with default parameters records ERROR span`() {
+        spans.clear()
+        assertFailsWith<IllegalStateException> { client.trace<Unit>("load_fail_default") { throw IllegalStateException("boom") } }
+
+        val span = spans.single()
+        assertEquals("load_fail_default", span.name)
+        assertEquals(SpanKind.INTERNAL, span.kind)
         assertEquals(SpanStatus.ERROR, span.status)
         assertEquals("java.lang.IllegalStateException", span.attributes[ERROR_TYPE_ATTRIBUTE])
     }
@@ -38,5 +78,18 @@ class TraceTest {
         }
 
         assertEquals(SpanStatus.UNSET, spans.single().status)
+    }
+
+    @Test
+    fun `cancellation with default parameters is recorded as UNSET`() {
+        spans.clear()
+        assertFailsWith<java.util.concurrent.CancellationException> {
+            client.trace<Unit>("load_cancel_default") { throw java.util.concurrent.CancellationException("stop") }
+        }
+
+        val span = spans.single()
+        assertEquals("load_cancel_default", span.name)
+        assertEquals(SpanKind.INTERNAL, span.kind)
+        assertEquals(SpanStatus.UNSET, span.status)
     }
 }
