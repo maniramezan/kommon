@@ -71,3 +71,67 @@ class LoadingErrorTest {
         assertTrue(error.message.contains("internet connection"))
     }
 }
+
+class LoadingErrorHeuristicsTest {
+    @Test
+    fun `digits embedded in a longer number are not treated as a status code`() {
+        assertEquals(LoadingError.UNKNOWN, LoadingError.from(RuntimeException("failed to load order 4040")))
+    }
+
+    @Test
+    fun `a stray 5 next to the word server is not a 5xx`() {
+        assertEquals(LoadingError.UNKNOWN, LoadingError.from(RuntimeException("Server rejected 5 items")))
+    }
+
+    @Test
+    fun `any 5xx status code maps to a server error`() {
+        assertEquals(LoadingError.SERVER, LoadingError.from(RuntimeException("HTTP 503")))
+    }
+
+    @Test
+    fun `403 maps to the unauthorized error`() {
+        assertEquals(LoadingError.UNAUTHORIZED, LoadingError.from(RuntimeException("status: 403")))
+    }
+
+    @Test
+    fun `self-referential cause chains terminate`() {
+        val looping =
+            object : RuntimeException("loop") {
+                override val cause: Throwable get() = this
+            }
+        assertEquals(LoadingError.UNKNOWN, LoadingError.from(looping))
+    }
+}
+
+class LoadingStateHelpersTest {
+    @Test
+    fun `map transforms only loaded data`() {
+        assertEquals(LoadingState.Loaded(4), LoadingState.Loaded(2).map { it * 2 })
+        assertEquals(LoadingState.Loading, (LoadingState.Loading as LoadingState<Int>).map { it * 2 })
+        val failed = LoadingState.Failed(LoadingError.UNKNOWN)
+        assertEquals(failed, (failed as LoadingState<Int>).map { it * 2 })
+    }
+
+    @Test
+    fun `isLoaded and isFailed reflect the state`() {
+        assertTrue(LoadingState.Loaded(1).isLoaded)
+        assertTrue(LoadingState.Failed(LoadingError.UNKNOWN).isFailed)
+        assertFalse(LoadingState.Idle.isLoaded)
+    }
+
+    @Test
+    fun `loadingStateOf wraps success and classifies failure`() =
+        kotlinx.coroutines.test.runTest {
+            assertEquals(LoadingState.Loaded("ok"), loadingStateOf { "ok" })
+            assertEquals(
+                LoadingState.Failed(LoadingError.TIMEOUT),
+                loadingStateOf<String> { throw java.net.SocketTimeoutException() },
+            )
+        }
+
+    @Test(expected = kotlinx.coroutines.CancellationException::class)
+    fun `loadingStateOf rethrows cancellation`() =
+        kotlinx.coroutines.test.runTest {
+            loadingStateOf<String> { throw kotlinx.coroutines.CancellationException("cancelled") }
+        }
+}

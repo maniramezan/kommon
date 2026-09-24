@@ -1,11 +1,13 @@
 package io.github.maniramezan.kommon.authsession
 
+import io.github.maniramezan.kommon.foundation.KommonLogger
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -102,5 +104,37 @@ class AuthSessionInitializerTest {
 
             verify(exactly = 1) { sessionStore.record(AuthSessionHint(hasAccount = false)) }
             verify(exactly = 0) { sessionStore.record(AuthSessionHint(hasAccount = true)) }
+        }
+
+    @Test
+    fun `a token provider failure is logged and observation still starts`() =
+        runTest {
+            val logger = mockk<KommonLogger>(relaxed = true)
+            every { authRepository.currentUser } returns null
+            coEvery { authTokenProvider.idToken(any()) } throws IllegalStateException("provider down")
+            initializer = AuthSessionInitializer(authRepository, authTokenProvider, sessionStore, logger, backgroundScope)
+
+            initializer.start()
+            testScheduler.runCurrent()
+            authStateFlow.emit(AuthUser(uid = "u4", isAnonymous = false))
+            testScheduler.runCurrent()
+
+            verify { logger.error(any(), "warmUp failed", any<IllegalStateException>()) }
+            verify { sessionStore.record(AuthSessionHint(hasAccount = true)) }
+        }
+
+    @Test
+    fun `an auth state flow failure is logged instead of crashing the scope`() =
+        runTest {
+            val logger = mockk<KommonLogger>(relaxed = true)
+            every { authRepository.currentUser } returns null
+            coEvery { authTokenProvider.idToken(any()) } returns "token"
+            every { authRepository.authStateFlow() } returns flow { throw IllegalStateException("listener failed") }
+            initializer = AuthSessionInitializer(authRepository, authTokenProvider, sessionStore, logger, backgroundScope)
+
+            initializer.start()
+            testScheduler.runCurrent()
+
+            verify { logger.error(any(), "observeAuthChanges failed", any<IllegalStateException>()) }
         }
 }

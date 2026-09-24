@@ -5,10 +5,14 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * Behavior contract for [SyncEngine], ported from Novalingo's `UserSyncCoordinatorTest` onto a
@@ -188,5 +192,106 @@ class SyncEngineTest {
 
             assertEquals(true, result.isSuccess)
             coVerify { api.sync(any()) }
+        }
+
+    @Test
+    fun `pagination guard fails instead of looping when the cursor does not advance`() =
+        runTest {
+            val adapter = TestResourceAdapter(api)
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            coEvery { api.sync(any()) } returns testResponse(cursor = "stuck", hasMore = true)
+
+            val result = engine.sync(adapter)
+
+            assertTrue(result.exceptionOrNull() is IllegalStateException)
+            coVerify(exactly = 2) { api.sync(any()) }
+        }
+
+    @Test
+    fun `pagination requests each page with the previous page's cursor`() =
+        runTest {
+            val adapter = TestResourceAdapter(api)
+            val requests = mutableListOf<SyncRequest<TestUpsert, TestDelete>>()
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            coEvery { api.sync(capture(requests)) } returnsMany
+                listOf(
+                    testResponse(cursor = "page-1", hasMore = true),
+                    testResponse(cursor = "page-2", hasMore = true),
+                    testResponse(cursor = "page-3", hasMore = false),
+                )
+
+            engine.sync(adapter)
+
+            assertEquals(listOf(null, "page-1", "page-2"), requests.map { it.since })
+        }
+
+    @Test
+    fun `completed telemetry reports first-page acks even after pagination`() =
+        runTest {
+            val adapter = TestResourceAdapter(api)
+            adapter.seed(TestEntity(id = "local-1", value = "hello", syncState = SyncState.PENDING_CREATE))
+            val telemetry = mockk<SyncTelemetrySink>(relaxed = true)
+            engine = SyncEngine(cursorStore, telemetry, clockMs = { 1_000L })
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            coEvery { api.sync(any()) } returnsMany
+                listOf(
+                    testResponse(
+                        applied = listOf(SyncAppliedRecord(key = "local-1", id = 1, status = "created")),
+                        cursor = "page-1",
+                        hasMore = true,
+                    ),
+                    testResponse(cursor = "page-2"),
+                )
+
+            engine.sync(adapter)
+
+            verify { telemetry.onSyncCompleted(adapter.resourceName, SyncResponse.MODE_DELTA, 1, 0, 0L) }
+        }
+
+    @Test
+    fun `lastSyncedAt comes from the injected clock`() =
+        runTest {
+            val adapter = TestResourceAdapter(api)
+            engine = SyncEngine(cursorStore, clockMs = { 42L })
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            coEvery { api.sync(any()) } returns testResponse(cursor = "c")
+
+            engine.sync(adapter)
+
+            coVerify { cursorStore.save(match { it.lastSyncedAt == 42L }) }
+        }
+
+    @Test
+    fun `syncAll returns the first failure with later failures suppressed`() =
+        runTest {
+            val first = TestResourceAdapter(api, resourceName = "first")
+            val second = TestResourceAdapter(api, resourceName = "second")
+            coEvery { cursorStore.get("first") } throws IllegalStateException("first")
+            coEvery { cursorStore.get("second") } throws IllegalArgumentException("second")
+
+            val error = requireNotNull(engine.syncAll(listOf(first, second)).exceptionOrNull())
+
+            assertEquals("first", error.message)
+            assertEquals(listOf("second"), error.suppressed.map { it.message })
+        }
+
+    @Test
+    fun `cancellation propagates and is not reported as a sync failure`() =
+        runTest {
+            val adapter = TestResourceAdapter(api)
+            val telemetry = mockk<SyncTelemetrySink>(relaxed = true)
+            engine = SyncEngine(cursorStore, telemetry)
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            coEvery { api.sync(any()) } throws CancellationException("cancelled")
+
+            assertFailsWith<CancellationException> { engine.sync(adapter) }
+
+            verify(exactly = 0) { telemetry.onSyncFailed(any(), any(), any()) }
+        }
+
+    @Test
+    fun `non-positive limit is rejected`() =
+        runTest {
+            assertFailsWith<IllegalArgumentException> { engine.sync(TestResourceAdapter(api), limit = 0) }
         }
 }
