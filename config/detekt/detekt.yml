@@ -8,8 +8,6 @@ complexity:
     functionThreshold: 8
     constructorThreshold: 12
     ignoreDefaultParameters: true
-  ReturnCount:
-    active: false
   TooManyFunctions:
     active: false
 
@@ -26,3 +24,5 @@ style:
     ignoreNumbers: ['-1', '0', '1', '2', '100', '200', '299', '400', '401', '403', '404', '500']
   MaxLineLength:
     maxLineLength: 140
+  ReturnCount:
+    active: false

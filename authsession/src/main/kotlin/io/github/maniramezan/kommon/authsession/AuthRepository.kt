@@ -1,43 +1,15 @@
 package io.github.maniramezan.kommon.authsession
 
-import android.app.Activity
-import kotlinx.coroutines.flow.Flow
-
 /**
- * Provider-agnostic authentication repository. Bridge this to Firebase Auth, Supabase Auth, or
+ * Provider-agnostic authentication repository combining [AuthStateProvider], [AnonymousAuth],
+ * [EmailPasswordAuth], and [SocialAuth]. Bridge this to Firebase Auth, Supabase Auth, or
  * any other auth backend.
+ *
+ * For consumers that only need a subset of capabilities (e.g. only session observation or only
+ * email authentication), depend on the narrower interfaces directly.
  */
-public interface AuthRepository {
-    public val currentUser: AuthUser?
-    public val isAuthenticated: Boolean
-    public val isAnonymous: Boolean
-
-    public fun authStateFlow(): Flow<AuthUser?>
-
-    public suspend fun signInAnonymously(): Result<AuthUser>
-
-    public suspend fun signInWithEmailAndPassword(
-        email: String,
-        password: String,
-    ): Result<AuthUser>
-
-    public suspend fun createAccountWithEmailAndPassword(
-        email: String,
-        password: String,
-    ): Result<AuthUser>
-
-    public suspend fun signInWithGoogle(idToken: String): Result<AuthUser>
-
-    public suspend fun signInWithApple(activity: Activity): Result<AuthUser>
-
-    public suspend fun sendPasswordResetEmail(email: String): Result<Unit>
-
-    public suspend fun sendSignInLinkToEmail(
-        email: String,
-        continueUrl: String,
-    ): Result<Unit>
-
-    public fun signOut()
-
-    public suspend fun deleteAccount(): Result<Unit>
-}
+public interface AuthRepository :
+    AuthStateProvider,
+    AnonymousAuth,
+    EmailPasswordAuth,
+    SocialAuth

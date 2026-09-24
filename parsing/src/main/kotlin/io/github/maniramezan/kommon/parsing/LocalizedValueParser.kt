@@ -18,11 +18,21 @@ public class LocalizedValueParser(
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
-    public fun parse(value: String?): String? {
-        if (value.isNullOrBlank()) return null
-        val parsed = runCatching { json.decodeFromString<Map<String, String>>(value) }.getOrNull()
-        return preferredValue(parsed) ?: value
-    }
+    /**
+     * Parses a plain string (returned as-is) or a JSON-encoded `{locale: value}` map. A decoded
+     * locale map with no usable entry yields `null` (as the [JsonElement] overload does) rather
+     * than leaking the raw JSON into the UI.
+     */
+    public fun parse(value: String?): String? =
+        when {
+            value.isNullOrBlank() -> null
+            // Cheap shape check first: plain strings (the common case) skip a throwing decode.
+            !value.trimStart().startsWith('{') -> value
+            else -> {
+                val parsed = runCatching { json.decodeFromString<Map<String, String>>(value) }.getOrNull()
+                if (parsed == null) value else preferredValue(parsed)
+            }
+        }
 
     public fun parse(element: JsonElement): String? =
         when (element) {
@@ -31,9 +41,13 @@ public class LocalizedValueParser(
             else -> null
         }
 
+    /**
+     * Returns the first non-blank value among [preferredLocaleKeys], else the first non-blank value
+     * in [values]. A preferred locale present with a blank value is skipped, not returned.
+     */
     public fun preferredValue(values: Map<String, String>?): String? {
         if (values.isNullOrEmpty()) return null
-        return preferredLocaleKeys.firstNotNullOfOrNull(values::get)
+        return preferredLocaleKeys.firstNotNullOfOrNull { key -> values[key]?.takeIf(String::isNotBlank) }
             ?: values.values.firstOrNull(String::isNotBlank)
     }
 

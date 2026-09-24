@@ -12,7 +12,15 @@ this file.
 
 ## Required Skill Loading
 
-Load the best matching installed skill before non-trivial planning, implementation, or review
+Repo-local skills live in `skills/` for all agents and encode this repo's own workflows — load the
+matching one first:
+
+- `kommon-new-module` — adding a module (settings, Dokka list, README/AGENTS tables, fakes).
+- `kommon-extract-component` — porting code out of a product app (Novalingo) into `kommon`.
+- `kommon-sync-engine` — any change to `:sync` (invariant checklist + test pattern).
+- `kommon-verify` — how to verify a change, including when Google Maven is unreachable.
+
+Also load the best matching installed skill before non-trivial planning, implementation, or review
 work:
 
 - `android-gradle-logic` for Gradle convention plugins, version catalogs, and module wiring.
@@ -25,34 +33,47 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
 
 ## Repository Map
 
-- `:foundation` — `BaseViewModel`, `LoadingState`/`LoadingError`, the `KommonLogger` logging seam
-  (+ `TimberLogger` bridge), `isValidEmail()`. No other module dependencies.
+- `:foundation` — `BaseViewModel`, `LoadingState` (+ `map`, `loadingStateOf {}`), `LoadingError`
+  (throwable → user-facing message classifier), the `KommonLogger` logging seam (+ `TimberLogger`
+  bridge with an optional `ReleaseLogSink`), and a pure-Kotlin `isValidEmail()`. No other module
+  dependencies.
 - `:sync` — the generic delta-sync engine: `SyncEngine`, `SyncResourceAdapter`, `SyncableEntity`/
   `SyncState`, the `SyncRequest`/`SyncResponse` wire envelope, `SyncCursorStore`, `SyncTelemetrySink`.
   Depends on `:foundation` only. This is the highest-value, most-tested module — treat its
-  invariants (ack guard, pending guard, tombstone reconciliation, pagination drain, per-resource
-  isolation) as load-bearing; see the KDoc on `SyncEngine` and `SyncEngineTest` before changing it.
-- `:authsession` — `AuthRepository`, `AuthUser`, `AuthSessionStore`, `AuthSessionInitializer`,
+  invariants (ack guard, pending guard, tombstone reconciliation, pagination drain + non-advancing
+  cursor guard, per-resource isolation, cancellation transparency) as load-bearing; see the KDoc on
+  `SyncEngine` and `SyncEngineTest` before changing it. Load the `kommon-sync-engine` skill first.
+- `:authsession` — `AuthRepository` (composing `AuthStateProvider`, `AnonymousAuth`,
+  `EmailPasswordAuth`, `SocialAuth`), `AuthUser`, `AuthSessionStore`, `AuthSessionInitializer`,
   `authSignInErrorMessage()`. Depends on `:foundation` for the logging seam.
 - `:analytics-core` — `AnalyticsClient` port, `AnalyticsEvent`, `NoOp`/`Logging`/
-  `CompositeAnalyticsClient`, `AnalyticsPayloadSanitizer`. Depends on `:foundation`.
+  `CompositeAnalyticsClient` (per-client failure isolation), `AnalyticsPayloadSanitizer`. Depends on
+  `:foundation`.
 - `:analytics-debug` — `AnalyticsDebugStore`, `AnalyticsCaptureClient` decorator. Depends on
   `:analytics-core`.
 - `:crashreporting` — `CrashlyticsClient` port, `NoOpCrashlyticsClient`, `RecordingCrashlyticsClient`
   (a test double shipped in `main`, not `test`, so consumer apps can use it directly). No deps.
-- `:telemetry` — `OpenTelemetryClient` port + `AnalyticsOpenTelemetryClient` bridge. Depends on
-  `:analytics-core`.
-- `:remoteconfig` — `RemoteConfigClient` port, `ConfigKey`/`ConfigValue`/`ConfigValueType`,
-  `ResolvedConfigEntry`/`ValueSource`. Deliberately carries **no** built-in key registry — apps own
-  their own `object AppConfigKeys { val ALL_KEYS = ... }`.
-- `:remoteconfig-debug` — `LocalOverrideStore` (SharedPreferences-backed debug override store).
-  Depends on `:remoteconfig` and `:foundation`.
+- `:telemetry` — `OpenTelemetryClient` port, `SpanKind`/`SpanStatus` constants, the `trace {}`
+  timing helper, and the `AnalyticsOpenTelemetryClient` bridge. Depends on `:analytics-core`.
+- `:remoteconfig` — `RemoteConfigClient` port, `ConfigKey` (validated; `ConfigKey.bool/string/int/
+  double` factories), `ConfigValue`/`ConfigValueType`, `ResolvedConfigEntry`/`ValueSource`, and
+  `ConfigResolver` + `ConfigOverrideSource` (the override → remote → default resolution every
+  provider bridge should reuse). Deliberately carries **no** built-in key registry — apps own their
+  own `object AppConfigKeys { val ALL_KEYS = ... }`.
+- `:remoteconfig-debug` — `LocalOverrideStore` (SharedPreferences-backed debug override store; a
+  `ConfigOverrideSource`). Depends on `:remoteconfig` and `:foundation`.
 - `:parsing` — `LocalizedValueParser`, `JsonEncodedStringArrayParser`. No deps beyond
   kotlinx-serialization.
 - `:testing` — fakes for consumer unit tests (`FakeSyncCursorStore`, `RecordingAnalyticsClient`,
-  `FakeRemoteConfigClient`). Depends on `:sync`, `:analytics-core`, `:remoteconfig` as `api` so
-  consumers get them transitively on their test classpath.
-- `build-logic/` — Gradle convention plugins (`kommon.android.library`, `kommon.kotlin.library`).
+  `FakeRemoteConfigClient`, `RecordingLogger`, `FakeAuthRepository`, `FakeAuthTokenProvider`,
+  `InMemoryAuthSessionStore`). Depends on `:foundation`, `:sync`, `:authsession`,
+  `:analytics-core`, `:remoteconfig` as `api` so consumers get them transitively on their test
+  classpath. When you add a port to a module, add a matching fake here.
+- `:design-system` — Kotlin Multiplatform (Android, JVM, iOS) platform-neutral design tokens
+  (`ColorToken`, spacing/shape/typography/motion tokens, `ThemeTokens`, `KommonDesignTokens`). No
+  Compose types; renderers live in `KMPComponents`. Uses the KMP Android plugin directly rather
+  than `kommon.android.library`, so it is not covered by the JaCoCo gate.
+- `build-logic/` — Gradle convention plugin (`kommon.android.library`).
 - `config/detekt/detekt.yml` — shared detekt overrides.
 
 ## Current Architecture Decisions
@@ -80,7 +101,7 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
 ## Build Logic And Dependency Shape
 
 - Shared Gradle behavior lives in `build-logic/convention` (`AndroidLibraryConventionPlugin`,
-  `KotlinLibraryConventionPlugin`, `Jacoco.kt`). Reuse those conventions instead of duplicating
+  `Jacoco.kt`). Reuse those conventions instead of duplicating
   Android/Kotlin setup in module build files.
 - Module inclusion lives in `settings.gradle.kts`; update it when module topology changes.
 - Version pins live in `gradle/libs.versions.toml`; update the catalog instead of hardcoding
@@ -104,12 +125,15 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   that touch `android.*` APIs (e.g. `SharedPreferences`, `Patterns`). **Known limitation**: in this
   AGP9/Kotlin toolchain combination, JaCoco does not measure line coverage for classes only
   exercised via `RobolectricTestRunner` — they read as 0% covered even when their tests pass. The
-  known-affected classes (`TimberLogger`, `EmailValidationKt`, `LocalOverrideStore`) are excluded
+  known-affected classes (`TimberLogger`, `LocalOverrideStore`) are excluded
   from the coverage ratio in `build-logic/convention/.../Jacoco.kt`'s `COVERAGE_EXCLUSIONS`. Keep
   writing real Robolectric tests for these classes regardless — the exclusion is about the metric,
   not about skipping verification. If you add a new Android-framework-dependent class, write its
   test the same way and add it to that exclusion list rather than lowering the module's coverage
   threshold.
+- Prefer pure-Kotlin implementations over `android.*` APIs when behavior allows it (e.g.
+  `isValidEmail()` reimplements `Patterns.EMAIL_ADDRESS`): consumers' plain JVM unit tests run with
+  `isReturnDefaultValues = true`, where Android stubs silently return `null`/`0`.
 - `SyncEngineTest` is the reference example for testing a generic contract: it defines its own
   `TestEntity`/`TestResourceAdapter`/`TestApi` fixtures rather than reusing app-specific types, and
   every test name documents the invariant it's protecting (ack guard, tombstone guard, pagination
@@ -130,6 +154,23 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   `SIGNING_IN_MEMORY_KEY`, `SIGNING_IN_MEMORY_KEY_PASSWORD`.
 - Remote: `https://github.com/maniramezan/kommon`.
 
+## Library Code Conventions
+
+- **Coroutine cancellation is never swallowed.** Anything that catches `Throwable` or uses
+  `runCatching` around suspending work must rethrow `CancellationException` first (see
+  `SyncEngine.runCatchingNonCancellation`, `AuthSessionInitializer.runContained`,
+  `loadingStateOf`).
+- **Background work must not crash the host.** Long-lived coroutines launched into a
+  library-owned or caller-provided scope contain and log failures via `KommonLogger`.
+- **Observational side channels are isolated.** Telemetry, analytics fan-out, and logging must
+  never change the outcome of the primary operation (`SyncEngine.reportTelemetry`,
+  `CompositeAnalyticsClient`).
+- **Inject time.** Take a `clockMs: () -> Long = System::currentTimeMillis` parameter instead of
+  calling the clock directly, so tests are deterministic.
+- **Validate at construction.** Value types that can be mis-declared (`ConfigKey`,
+  `ColorToken`) `require(...)` their invariants in `init`, so misconfiguration fails at startup.
+- One public type per file, named after the file, unless the types are a tiny sealed family.
+
 ## Build And Verification
 
 ```bash
@@ -142,3 +183,6 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
 
 For dependency/build-logic changes, also run the affected module's `assemble`/`test` tasks and
 inspect generated dependency or build failures before broadening scope.
+
+If `./gradlew` cannot resolve AGP (sandboxed agents without access to `dl.google.com`), follow the
+`kommon-verify` skill's JVM-only fallback and state in the PR which checks could not run locally.

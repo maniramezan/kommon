@@ -28,5 +28,9 @@ public object JsonEncodedStringArrayParser {
         }
     }
 
-    private fun parseStringArray(value: String): List<String>? = runCatching { json.decodeFromString<List<String>>(value) }.getOrNull()
+    // Cheap shape check first: plain strings (the common case) skip a throwing decode entirely.
+    private fun parseStringArray(value: String): List<String>? {
+        if (!value.trimStart().startsWith('[')) return null
+        return runCatching { json.decodeFromString<List<String>>(value) }.getOrNull()
+    }
 }

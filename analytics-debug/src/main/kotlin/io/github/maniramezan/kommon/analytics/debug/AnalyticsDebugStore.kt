@@ -55,7 +55,14 @@ public class InMemoryAnalyticsDebugStore(
 
     override fun append(entry: AnalyticsDebugEntry) {
         val entryWithId = entry.copy(id = nextId.getAndIncrement())
-        _entries.update { current -> (current + entryWithId).takeLast(capacity) }
+        _entries.update { current ->
+            // One allocation per append: copy only the entries that survive eviction.
+            val keep = minOf(current.size, capacity - 1)
+            ArrayList<AnalyticsDebugEntry>(keep + 1).apply {
+                addAll(current.subList(current.size - keep, current.size))
+                add(entryWithId)
+            }
+        }
     }
 
     override fun clear() {

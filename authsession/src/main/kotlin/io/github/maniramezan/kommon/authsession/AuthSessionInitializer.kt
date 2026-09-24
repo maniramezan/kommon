@@ -2,6 +2,7 @@ package io.github.maniramezan.kommon.authsession
 
 import io.github.maniramezan.kommon.foundation.KommonLogger
 import io.github.maniramezan.kommon.foundation.NoOpLogger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -10,11 +11,15 @@ import kotlinx.coroutines.launch
 
 /**
  * Warms the auth session at cold start: mints/refreshes a token before the first API request can
- * race an unauthenticated call, then keeps [sessionStore] updated as [AuthRepository.authStateFlow]
+ * race an unauthenticated call, then keeps [sessionStore] updated as [AuthStateProvider.authStateFlow]
  * changes. Call [start] early in app startup and [stop] when its owning app scope is torn down.
+ *
+ * Failures from the token provider or the auth-state flow are logged and contained: they never
+ * escape into [scope] (where an uncaught exception would crash the process). A failed warm-up
+ * still proceeds to observing auth changes, so the session hint keeps tracking the real state.
  */
 public class AuthSessionInitializer(
-    private val authRepository: AuthRepository,
+    private val authRepository: AuthStateProvider,
     private val authTokenProvider: AuthTokenProvider,
     private val sessionStore: AuthSessionStore,
     private val logger: KommonLogger = NoOpLogger,
@@ -28,8 +33,8 @@ public class AuthSessionInitializer(
         if (observationJob?.isActive == true) return
         observationJob =
             scope.launch {
-                warmUp()
-                observeAuthChanges()
+                runContained("warmUp") { warmUp() }
+                runContained("observeAuthChanges") { observeAuthChanges() }
             }
     }
 
@@ -44,23 +49,43 @@ public class AuthSessionInitializer(
         val storedHint = sessionStore.read()
         val currentUser = authRepository.currentUser
         val isReturningSignedIn = currentUser?.let { !it.isAnonymous } == true
-        logger.info(
-            TAG,
-            "warmUp: hasCurrentUser=${currentUser != null}, " +
-                "isSignedIn=$isReturningSignedIn, storedHasAccount=${storedHint?.hasAccount}",
-        )
+        logSafely {
+            logger.info(
+                TAG,
+                "warmUp: hasCurrentUser=${currentUser != null}, " +
+                    "isSignedIn=$isReturningSignedIn, storedHasAccount=${storedHint?.hasAccount}",
+            )
+        }
 
         val token = authTokenProvider.idToken(forceRefresh = isReturningSignedIn)
         if (token.isNullOrBlank()) {
-            logger.error(TAG, "warmUp: no ID token after warm-up; first requests may be unauthenticated")
+            logSafely { logger.error(TAG, "warmUp: no ID token after warm-up; first requests may be unauthenticated") }
         } else {
-            logger.info(TAG, "warmUp: session ready")
+            logSafely { logger.info(TAG, "warmUp: session ready") }
         }
         recordHint(authRepository.currentUser)
     }
 
     private suspend fun observeAuthChanges() {
         authRepository.authStateFlow().collect(::recordHint)
+    }
+
+    @Suppress("TooGenericExceptionCaught") // Contain any provider failure; see class KDoc.
+    private suspend fun runContained(
+        stage: String,
+        block: suspend () -> Unit,
+    ) {
+        try {
+            block()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (throwable: Throwable) {
+            logSafely { logger.error(TAG, "$stage failed", throwable) }
+        }
+    }
+
+    private inline fun logSafely(block: () -> Unit) {
+        runCatching(block).onFailure { if (it is CancellationException) throw it }
     }
 
     private fun recordHint(user: AuthUser?) {

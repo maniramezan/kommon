@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import io.github.maniramezan.kommon.foundation.KommonLogger
 import io.github.maniramezan.kommon.foundation.NoOpLogger
 import io.github.maniramezan.kommon.remoteconfig.ConfigKey
+import io.github.maniramezan.kommon.remoteconfig.ConfigOverrideSource
 import io.github.maniramezan.kommon.remoteconfig.ConfigValue
 import io.github.maniramezan.kommon.remoteconfig.ConfigValueType
 
@@ -14,23 +15,33 @@ private const val LOG_TAG = "RemoteConfigOverride"
  * Debug-only local override store for remote config values.
  *
  * In release builds ([isDebug] = false) the override accessors return null/no-op so they can
- * never accidentally shadow remote values in production.
+ * never accidentally shadow remote values in production. Implements [ConfigOverrideSource], so it
+ * plugs straight into a [io.github.maniramezan.kommon.remoteconfig.ConfigResolver].
+ *
+ * If a key's [ConfigValueType] changes between app versions, a previously stored override of the
+ * old type is discarded (and removed) instead of crashing with a [ClassCastException].
  */
 public class LocalOverrideStore(
     context: Context,
     private val isDebug: Boolean,
     prefsName: String = DEFAULT_PREFS_NAME,
     private val logger: KommonLogger = NoOpLogger,
-) {
+) : ConfigOverrideSource {
     private val prefs: SharedPreferences = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
 
-    public fun override(key: ConfigKey): ConfigValue? {
+    override fun override(key: ConfigKey): ConfigValue? {
         if (!isDebug || !prefs.contains(key.id)) return null
-        return when (key.valueType) {
-            ConfigValueType.BOOL -> ConfigValue.Bool(prefs.getBoolean(key.id, false))
-            ConfigValueType.STRING -> ConfigValue.StringVal(prefs.getString(key.id, "") ?: "")
-            ConfigValueType.INT -> ConfigValue.Int(prefs.getInt(key.id, 0))
-            ConfigValueType.DOUBLE -> ConfigValue.Double(java.lang.Double.longBitsToDouble(prefs.getLong(key.id, 0L)))
+        return try {
+            when (key.valueType) {
+                ConfigValueType.BOOL -> ConfigValue.Bool(prefs.getBoolean(key.id, false))
+                ConfigValueType.STRING -> ConfigValue.StringVal(prefs.getString(key.id, "") ?: "")
+                ConfigValueType.INT -> ConfigValue.Int(prefs.getInt(key.id, 0))
+                ConfigValueType.DOUBLE -> ConfigValue.Double(java.lang.Double.longBitsToDouble(prefs.getLong(key.id, 0L)))
+            }
+        } catch (mismatch: ClassCastException) {
+            logger.warning(LOG_TAG, "Discarding override for ${key.id}: stored type no longer matches", mismatch)
+            prefs.edit().remove(key.id).apply()
+            null
         }
     }
 
@@ -73,12 +84,3 @@ public class LocalOverrideStore(
         public const val DEFAULT_PREFS_NAME: String = "io.github.maniramezan.kommon.remoteconfig.overrides"
     }
 }
-
-private fun ConfigKey.accepts(value: ConfigValue): Boolean =
-    when (valueType) {
-        ConfigValueType.BOOL -> value is ConfigValue.Bool
-        ConfigValueType.STRING ->
-            value is ConfigValue.StringVal && (allowedValues?.contains(value.value) != false)
-        ConfigValueType.INT -> value is ConfigValue.Int
-        ConfigValueType.DOUBLE -> value is ConfigValue.Double
-    }
