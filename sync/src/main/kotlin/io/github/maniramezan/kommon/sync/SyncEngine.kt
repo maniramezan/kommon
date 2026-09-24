@@ -81,13 +81,15 @@ public class SyncEngine(
             storeMetadata(adapter.resourceName, response)
             var changeCount = response.serverChanges.size
 
+            val requestedCursors = mutableSetOf<String>()
             while (response.hasMore) {
                 val since = response.cursor
                 // Pagination guard: a server that keeps answering hasMore without advancing the
                 // cursor would otherwise spin this loop forever.
                 check(since != null) { "Sync '${adapter.resourceName}': hasMore=true without a cursor" }
+                requestedCursors += since
                 response = adapter.api(SyncRequest(since = since, limit = limit))
-                check(!response.hasMore || response.cursor != since) {
+                check(!response.hasMore || response.cursor !in requestedCursors) {
                     "Sync '${adapter.resourceName}': cursor did not advance past '$since'"
                 }
                 fullMode = ingestChanges(adapter, response, activeKeys) || fullMode

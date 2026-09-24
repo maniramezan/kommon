@@ -2,13 +2,15 @@ package io.github.maniramezan.kommon.analytics
 
 import io.github.maniramezan.kommon.foundation.KommonLogger
 import io.github.maniramezan.kommon.foundation.NoOpLogger
+import java.util.concurrent.CancellationException
 
 /**
  * Forwards every call to all configured [clients], so apps can fan out to multiple providers.
  *
  * Each client is isolated: an exception from one provider SDK is logged to [logger] and does not
  * stop the remaining clients from receiving the call (nor propagate to the caller). Analytics is
- * observational and must never crash a user flow.
+ * observational and must never crash a user flow. Logger failures are isolated too.
+ * [CancellationException] propagates to preserve coroutine cancellation.
  */
 public class CompositeAnalyticsClient(
     private val clients: List<AnalyticsClient>,
@@ -50,8 +52,11 @@ public class CompositeAnalyticsClient(
         for (client in clients) {
             try {
                 call(client)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (error: Exception) {
-                logger.error(LOG_TAG, "${client::class.simpleName}.$operation failed", error)
+                runCatching { logger.error(LOG_TAG, "${client::class.simpleName}.$operation failed", error) }
+                    .onFailure { if (it is CancellationException) throw it }
             }
         }
     }

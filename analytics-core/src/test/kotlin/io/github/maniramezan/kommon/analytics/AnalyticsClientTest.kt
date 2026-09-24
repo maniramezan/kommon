@@ -110,4 +110,31 @@ class CompositeAnalyticsClientTest {
         verify { first.flush() }
         verify { second.flush() }
     }
+
+    @Test
+    fun `logger failure does not prevent delivery to remaining clients`() {
+        val failing = mockk<AnalyticsClient>(relaxed = true)
+        val healthy = mockk<AnalyticsClient>(relaxed = true)
+        val logger = mockk<KommonLogger>(relaxed = true)
+        io.mockk.every { failing.flush() } throws IllegalStateException("sdk down")
+        io.mockk.every { logger.error(any(), any(), any()) } throws IllegalStateException("logger down")
+
+        CompositeAnalyticsClient(listOf(failing, healthy), logger).flush()
+
+        verify { healthy.flush() }
+    }
+
+    @Test
+    fun `client cancellation propagates`() {
+        val failing = mockk<AnalyticsClient>(relaxed = true)
+        val cancellation = java.util.concurrent.CancellationException("cancelled")
+        io.mockk.every { failing.flush() } throws cancellation
+
+        val actual =
+            kotlin.test.assertFailsWith<java.util.concurrent.CancellationException> {
+                CompositeAnalyticsClient(failing).flush()
+            }
+
+        kotlin.test.assertSame(cancellation, actual)
+    }
 }

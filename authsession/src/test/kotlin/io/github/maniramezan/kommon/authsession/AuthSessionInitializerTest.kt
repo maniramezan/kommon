@@ -152,4 +152,22 @@ class AuthSessionInitializerTest {
             coVerify { authTokenProvider.idToken(forceRefresh = true) }
             verify { sessionStore.record(AuthSessionHint(hasAccount = true)) }
         }
+
+    @Test
+    fun `logger failures do not skip token warmup or crash auth observation`() =
+        runTest {
+            val logger = mockk<KommonLogger>(relaxed = true)
+            every { logger.info(any(), any()) } throws IllegalStateException("logger down")
+            every { logger.error(any(), any(), any()) } throws IllegalStateException("logger down")
+            coEvery { authTokenProvider.idToken(any()) } throws IllegalStateException("provider down")
+            initializer = AuthSessionInitializer(authRepository, authTokenProvider, sessionStore, logger, backgroundScope)
+
+            initializer.start()
+            testScheduler.runCurrent()
+            authStateFlow.emit(AuthUser(uid = "u6", isAnonymous = false))
+            testScheduler.runCurrent()
+
+            coVerify(exactly = 1) { authTokenProvider.idToken(any()) }
+            verify { sessionStore.record(AuthSessionHint(hasAccount = true)) }
+        }
 }

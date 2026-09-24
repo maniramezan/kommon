@@ -326,4 +326,23 @@ class SyncEngineTest {
         runTest {
             assertFailsWith<IllegalArgumentException> { engine.sync(TestResourceAdapter(api), limit = 0) }
         }
+
+    @Test
+    fun `pagination guard rejects a cursor cycle before requesting a page twice`() =
+        runTest {
+            val adapter = TestResourceAdapter(api)
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            var calls = 0
+            coEvery { api.sync(any()) } answers {
+                calls += 1
+                check(calls <= 3) { "Requested a repeated page" }
+                testResponse(cursor = if (calls % 2 == 1) "page-a" else "page-b", hasMore = true)
+            }
+
+            val result = engine.sync(adapter)
+
+            assertTrue(result.exceptionOrNull() is IllegalStateException)
+            coVerify(exactly = 3) { api.sync(any()) }
+            coVerify(exactly = 1) { cursorStore.save(match { it.cursor == "page-a" }) }
+        }
 }

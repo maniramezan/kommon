@@ -49,17 +49,19 @@ public class AuthSessionInitializer(
         val storedHint = sessionStore.read()
         val currentUser = authRepository.currentUser
         val isReturningSignedIn = currentUser?.let { !it.isAnonymous } == true
-        logger.info(
-            TAG,
-            "warmUp: hasCurrentUser=${currentUser != null}, " +
-                "isSignedIn=$isReturningSignedIn, storedHasAccount=${storedHint?.hasAccount}",
-        )
+        logSafely {
+            logger.info(
+                TAG,
+                "warmUp: hasCurrentUser=${currentUser != null}, " +
+                    "isSignedIn=$isReturningSignedIn, storedHasAccount=${storedHint?.hasAccount}",
+            )
+        }
 
         val token = authTokenProvider.idToken(forceRefresh = isReturningSignedIn)
         if (token.isNullOrBlank()) {
-            logger.error(TAG, "warmUp: no ID token after warm-up; first requests may be unauthenticated")
+            logSafely { logger.error(TAG, "warmUp: no ID token after warm-up; first requests may be unauthenticated") }
         } else {
-            logger.info(TAG, "warmUp: session ready")
+            logSafely { logger.info(TAG, "warmUp: session ready") }
         }
         recordHint(authRepository.currentUser)
     }
@@ -78,8 +80,12 @@ public class AuthSessionInitializer(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (throwable: Throwable) {
-            logger.error(TAG, "$stage failed", throwable)
+            logSafely { logger.error(TAG, "$stage failed", throwable) }
         }
+    }
+
+    private inline fun logSafely(block: () -> Unit) {
+        runCatching(block).onFailure { if (it is CancellationException) throw it }
     }
 
     private fun recordHint(user: AuthUser?) {

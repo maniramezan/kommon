@@ -72,7 +72,9 @@ public const val ERROR_TYPE_ATTRIBUTE: String = "error.type"
 /**
  * Times [block] and records it as a span: [SpanStatus.OK] on success, [SpanStatus.ERROR] (with
  * [ERROR_TYPE_ATTRIBUTE]) when it throws. Cancellation is recorded as [SpanStatus.UNSET], since a
- * cancelled operation did not fail. The exception is always rethrown.
+ * cancelled operation did not fail. The exception is always rethrown. Sink failures are ignored
+ * so recording cannot change the result or replace the original exception.
+ * The inline block also supports suspending calls from a coroutine.
  *
  * ```kotlin
  * val lessons = telemetry.trace("load_lessons", SpanKind.CLIENT, mapOf("course" to courseId)) {
@@ -81,38 +83,19 @@ public const val ERROR_TYPE_ATTRIBUTE: String = "error.type"
  * ```
  */
 @Suppress("TooGenericExceptionCaught") // Record every failure, then rethrow it unchanged.
-public fun <T> OpenTelemetryClient.trace(
+public inline fun <T> OpenTelemetryClient.trace(
     name: String,
     kind: String = SpanKind.INTERNAL,
     attributes: Map<String, Any> = emptyMap(),
     block: () -> T,
 ): T {
-    val startNanos = System.nanoTime()
-    val result =
-        try {
-            block()
-        } catch (cancellation: java.util.concurrent.CancellationException) {
-            recordTimedSpan(name, kind, SpanStatus.UNSET, startNanos, attributes)
-            throw cancellation
-        } catch (error: Throwable) {
-            val errorType = error::class.qualifiedName ?: "unknown"
-            recordTimedSpan(name, kind, SpanStatus.ERROR, startNanos, attributes + (ERROR_TYPE_ATTRIBUTE to errorType))
-            throw error
-        }
-    recordTimedSpan(name, kind, SpanStatus.OK, startNanos, attributes)
-    return result
+    val recording = TraceRecording(this, name, kind, attributes)
+    try {
+        return block()
+    } catch (error: Throwable) {
+        recording.failed(error)
+        throw error
+    } finally {
+        recording.finish()
+    }
 }
-
-@PublishedApi
-internal fun OpenTelemetryClient.recordTimedSpan(
-    name: String,
-    kind: String,
-    status: String,
-    startNanos: Long,
-    attributes: Map<String, Any>,
-) {
-    val durationMs = (System.nanoTime() - startNanos) / NANOS_PER_MILLI
-    recordSpan(OpenTelemetrySpan(name, kind, status, durationMs, attributes))
-}
-
-private const val NANOS_PER_MILLI: Long = 1_000_000L

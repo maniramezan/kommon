@@ -92,4 +92,41 @@ class TraceTest {
         assertEquals(SpanKind.INTERNAL, span.kind)
         assertEquals(SpanStatus.UNSET, span.status)
     }
+
+    @Test
+    fun `sink failure cannot change a successful result`() {
+        val failing = OpenTelemetryClient { error("sink down") }
+        assertEquals("done", failing.trace("load") { "done" })
+    }
+
+    @Test
+    fun `sink failure cannot replace an operation failure or cancellation`() {
+        val failing = OpenTelemetryClient { error("sink down") }
+        for (original in listOf(IllegalArgumentException("operation"), java.util.concurrent.CancellationException("cancelled"))) {
+            val actual = assertFailsWith<Exception> { failing.trace<Unit>("load") { throw original } }
+            kotlin.test.assertSame(original, actual)
+        }
+    }
+
+    @Test
+    fun `trace allows a block to suspend and records its result`() =
+        kotlinx.coroutines.runBlocking {
+            val result =
+                client.trace("suspending") {
+                    kotlinx.coroutines.yield()
+                    "done"
+                }
+            assertEquals("done", result)
+            assertEquals(SpanStatus.OK, spans.single().status)
+        }
+
+    @Test
+    fun `non-local return still records a span`() {
+        fun load(): String {
+            client.trace("return") { return "done" }
+        }
+
+        assertEquals("done", load())
+        assertEquals(SpanStatus.OK, spans.single().status)
+    }
 }
