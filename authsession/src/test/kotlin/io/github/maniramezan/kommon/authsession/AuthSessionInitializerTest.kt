@@ -137,4 +137,19 @@ class AuthSessionInitializerTest {
 
             verify { logger.error(any(), "observeAuthChanges failed", any<IllegalStateException>()) }
         }
+
+    @Test
+    fun `works with a standalone AuthStateProvider`() =
+        runTest {
+            val stateProvider = mockk<AuthStateProvider>(relaxed = true)
+            every { stateProvider.currentUser } returns AuthUser(uid = "u5", isAnonymous = false)
+            every { stateProvider.authStateFlow() } returns authStateFlow
+            coEvery { authTokenProvider.idToken(forceRefresh = true) } returns "token-456"
+
+            val init = AuthSessionInitializer(stateProvider, authTokenProvider, sessionStore)
+            init.warmUp()
+
+            coVerify { authTokenProvider.idToken(forceRefresh = true) }
+            verify { sessionStore.record(AuthSessionHint(hasAccount = true)) }
+        }
 }

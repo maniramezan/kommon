@@ -60,4 +60,3 @@ maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPubli
 
 # Convention plugins (defined in build-logic)
 kommon-android-library = { id = "kommon.android.library" }
-kommon-kotlin-library = { id = "kommon.kotlin.library" }

@@ -2,7 +2,7 @@ package io.github.maniramezan.kommon.remoteconfig
 
 /**
  * A source of local overrides that shadow remote values (typically debug-only; see
- * `remoteconfig-debug`'s `LocalOverrideStore`). Returns `null` when [key] has no override.
+ * `remoteconfig-debug`'s `LocalOverrideStore`). Returns `null` when a key has no override.
  */
 public fun interface ConfigOverrideSource {
     public fun override(key: ConfigKey): ConfigValue?

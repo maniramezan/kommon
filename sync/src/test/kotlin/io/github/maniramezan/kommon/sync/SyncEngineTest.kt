@@ -163,6 +163,38 @@ class SyncEngineTest {
         }
 
     @Test
+    fun `full resync applies push acks from initial response`() =
+        runTest {
+            val adapter = TestResourceAdapter(api)
+            val telemetry = mockk<SyncTelemetrySink>(relaxed = true)
+            engine = SyncEngine(cursorStore, telemetry)
+            adapter.seed(TestEntity(id = "local-1", value = "hello", syncState = SyncState.PENDING_CREATE))
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            coEvery { api.sync(any()) } returnsMany
+                listOf(
+                    testResponse(
+                        applied = listOf(SyncAppliedRecord(key = "local-1", id = 101, status = "created", updatedAt = 999L)),
+                        fullResyncRequired = true,
+                        cursor = null,
+                    ),
+                    testResponse(
+                        mode = SyncResponse.MODE_FULL,
+                        serverChanges = listOf(TestChange(id = 101, value = "hello from server", updatedAt = 999L)),
+                        cursor = "fresh",
+                    ),
+                )
+
+            engine.sync(adapter)
+
+            val stored = requireNotNull(adapter.row("server-101"))
+            assertEquals(101, stored.serverId)
+            assertEquals(SyncState.SYNCED, stored.syncState)
+            assertEquals("hello from server", stored.value)
+            coVerify(exactly = 2) { api.sync(any()) }
+            verify { telemetry.onSyncCompleted(adapter.resourceName, any(), 1, 1, any()) }
+        }
+
+    @Test
     fun `syncAll isolates one resource's failure from the others`() =
         runTest {
             val failing = TestResourceAdapter(api, resourceName = "failing")

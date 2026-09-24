@@ -43,7 +43,8 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   invariants (ack guard, pending guard, tombstone reconciliation, pagination drain + non-advancing
   cursor guard, per-resource isolation, cancellation transparency) as load-bearing; see the KDoc on
   `SyncEngine` and `SyncEngineTest` before changing it. Load the `kommon-sync-engine` skill first.
-- `:authsession` — `AuthRepository`, `AuthUser`, `AuthSessionStore`, `AuthSessionInitializer`,
+- `:authsession` — `AuthRepository` (composing `AuthStateProvider`, `AnonymousAuth`,
+  `EmailPasswordAuth`, `SocialAuth`), `AuthUser`, `AuthSessionStore`, `AuthSessionInitializer`,
   `authSignInErrorMessage()`. Depends on `:foundation` for the logging seam.
 - `:analytics-core` — `AnalyticsClient` port, `AnalyticsEvent`, `NoOp`/`Logging`/
   `CompositeAnalyticsClient` (per-client failure isolation), `AnalyticsPayloadSanitizer`. Depends on
@@ -72,7 +73,7 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   (`ColorToken`, spacing/shape/typography/motion tokens, `ThemeTokens`, `KommonDesignTokens`). No
   Compose types; renderers live in `KMPComponents`. Uses the KMP Android plugin directly rather
   than `kommon.android.library`, so it is not covered by the JaCoCo gate.
-- `build-logic/` — Gradle convention plugins (`kommon.android.library`, `kommon.kotlin.library`).
+- `build-logic/` — Gradle convention plugin (`kommon.android.library`).
 - `config/detekt/detekt.yml` — shared detekt overrides.
 
 ## Current Architecture Decisions
@@ -100,7 +101,7 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
 ## Build Logic And Dependency Shape
 
 - Shared Gradle behavior lives in `build-logic/convention` (`AndroidLibraryConventionPlugin`,
-  `KotlinLibraryConventionPlugin`, `Jacoco.kt`). Reuse those conventions instead of duplicating
+  `Jacoco.kt`). Reuse those conventions instead of duplicating
   Android/Kotlin setup in module build files.
 - Module inclusion lives in `settings.gradle.kts`; update it when module topology changes.
 - Version pins live in `gradle/libs.versions.toml`; update the catalog instead of hardcoding

@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Warms the auth session at cold start: mints/refreshes a token before the first API request can
- * race an unauthenticated call, then keeps [sessionStore] updated as [AuthRepository.authStateFlow]
+ * race an unauthenticated call, then keeps [sessionStore] updated as [AuthStateProvider.authStateFlow]
  * changes. Call [start] early in app startup and [stop] when its owning app scope is torn down.
  *
  * Failures from the token provider or the auth-state flow are logged and contained: they never
@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
  * still proceeds to observing auth changes, so the session hint keeps tracking the real state.
  */
 public class AuthSessionInitializer(
-    private val authRepository: AuthRepository,
+    private val authRepository: AuthStateProvider,
     private val authTokenProvider: AuthTokenProvider,
     private val sessionStore: AuthSessionStore,
     private val logger: KommonLogger = NoOpLogger,

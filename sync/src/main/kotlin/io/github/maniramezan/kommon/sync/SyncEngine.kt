@@ -70,12 +70,12 @@ public class SyncEngine(
         try {
             reportTelemetry { telemetry.onSyncStarted(adapter.resourceName) }
             val pendingByKey = adapter.pending().associateBy { adapter.syncKey(it) }
-            var response = push(adapter, pendingByKey.values.toList(), limit)
-            if (response.fullResyncRequired) response = fullResync(adapter, limit)
+            val pushResponse = push(adapter, pendingByKey.values.toList(), limit)
+            // Acks arrive on the push response; apply them before a potential fullResync purges synced rows.
+            applyAck(adapter, pushResponse.applied, pendingByKey)
+            val appliedCount = pushResponse.applied.size
 
-            applyAck(adapter, response.applied, pendingByKey)
-            // Acks only arrive on the first page; capture the count before pagination replaces it.
-            val appliedCount = response.applied.size
+            var response = if (pushResponse.fullResyncRequired) fullResync(adapter, limit) else pushResponse
             val activeKeys = mutableSetOf<String>()
             var fullMode = ingestChanges(adapter, response, activeKeys)
             storeMetadata(adapter.resourceName, response)
