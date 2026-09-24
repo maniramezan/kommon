@@ -18,7 +18,6 @@ private val COVERAGE_EXCLUSIONS =
         // their behavior is exercised by real, passing tests. Exclude them from the ratio rather
         // than chase an unmeasurable number; this does not exempt them from having tests.
         "**/TimberLogger*.class",
-        "**/EmailValidationKt*.class",
         "**/LocalOverrideStore*.class",
         // Interface with only abstract members plus default-argument synthetic dispatch
         // (`DefaultImpls`); there is no real logic to cover.

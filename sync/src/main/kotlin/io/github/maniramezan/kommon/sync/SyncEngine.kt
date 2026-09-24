@@ -13,10 +13,16 @@ import kotlinx.coroutines.sync.withLock
  *
  * This is a plain, DI-framework-agnostic class: construct it with your own [SyncCursorStore] and
  * (optionally) a [SyncTelemetrySink], and wire it into whatever DI container your app uses.
+ *
+ * Coroutine cancellation is never converted into a failed [Result]: cancelling the caller cancels
+ * the pass and rethrows [CancellationException], and is not reported as a sync failure.
+ *
+ * @param clockMs wall-clock source for `lastSyncedAt` and telemetry durations; override in tests.
  */
 public class SyncEngine(
     private val cursorStore: SyncCursorStore,
     private val telemetry: SyncTelemetrySink = NoOpSyncTelemetrySink,
+    private val clockMs: () -> Long = System::currentTimeMillis,
 ) {
     // Serialises sync passes so overlapping triggers can't double-apply.
     private val syncMutex = Mutex()
@@ -24,43 +30,68 @@ public class SyncEngine(
     /**
      * Runs [adapters] in sequence under one sync pass. Per-resource isolation: one resource
      * failing does not abort the others; the first failure (if any) is returned once all
-     * adapters have been attempted.
+     * adapters have been attempted, with later failures attached via [Throwable.addSuppressed].
      */
     public suspend fun syncAll(
         adapters: List<SyncResourceAdapter<*, *, *, *>>,
         limit: Int = DEFAULT_LIMIT,
-    ): Result<Unit> =
-        syncMutex.withLock {
-            val errors = mutableListOf<Throwable>()
+    ): Result<Unit> {
+        require(limit > 0) { "limit must be greater than zero" }
+        return syncMutex.withLock {
+            var firstError: Throwable? = null
             for (adapter in adapters) {
-                runCatching { drive(adapter, limit) }.onFailure { errors += it }
+                runCatchingNonCancellation { drive(adapter, limit) }.onFailure { error ->
+                    val first = firstError
+                    when {
+                        first == null -> firstError = error
+                        first !== error -> first.addSuppressed(error)
+                    }
+                }
             }
-            errors.firstOrNull()?.let { Result.failure(it) } ?: Result.success(Unit)
+            firstError?.let { Result.failure(it) } ?: Result.success(Unit)
         }
+    }
 
     /** Runs a single resource's sync pass. */
     public suspend fun <E : SyncableEntity<E>, U, D, C> sync(
         adapter: SyncResourceAdapter<E, U, D, C>,
         limit: Int = DEFAULT_LIMIT,
-    ): Result<Unit> = syncMutex.withLock { runCatching { drive(adapter, limit) } }
+    ): Result<Unit> {
+        require(limit > 0) { "limit must be greater than zero" }
+        return syncMutex.withLock { runCatchingNonCancellation { drive(adapter, limit) } }
+    }
 
     @Suppress("TooGenericExceptionCaught") // Any failure must reach telemetry, then rethrow.
-    private suspend fun <E : SyncableEntity<E>, U, D, C> drive(adapter: SyncResourceAdapter<E, U, D, C>, limit: Int) {
-        val startedAt = System.currentTimeMillis()
+    private suspend fun <E : SyncableEntity<E>, U, D, C> drive(
+        adapter: SyncResourceAdapter<E, U, D, C>,
+        limit: Int,
+    ) {
+        val startedAt = clockMs()
         try {
             reportTelemetry { telemetry.onSyncStarted(adapter.resourceName) }
             val pendingByKey = adapter.pending().associateBy { adapter.syncKey(it) }
-            var response = push(adapter, pendingByKey.values.toList(), limit)
-            if (response.fullResyncRequired) response = fullResync(adapter, limit)
+            val pushResponse = push(adapter, pendingByKey.values.toList(), limit)
+            // Acks arrive on the push response; apply them before a potential fullResync purges synced rows.
+            applyAck(adapter, pushResponse.applied, pendingByKey)
+            val appliedCount = pushResponse.applied.size
 
-            applyAck(adapter, response.applied, pendingByKey)
+            var response = if (pushResponse.fullResyncRequired) fullResync(adapter, limit) else pushResponse
             val activeKeys = mutableSetOf<String>()
             var fullMode = ingestChanges(adapter, response, activeKeys)
             storeMetadata(adapter.resourceName, response)
             var changeCount = response.serverChanges.size
 
+            val requestedCursors = mutableSetOf<String>()
             while (response.hasMore) {
-                response = adapter.api(SyncRequest(since = cursorOf(adapter), limit = limit))
+                val since = response.cursor
+                // Pagination guard: a server that keeps answering hasMore without advancing the
+                // cursor would otherwise spin this loop forever.
+                check(since != null) { "Sync '${adapter.resourceName}': hasMore=true without a cursor" }
+                requestedCursors += since
+                response = adapter.api(SyncRequest(since = since, limit = limit))
+                check(!response.hasMore || response.cursor !in requestedCursors) {
+                    "Sync '${adapter.resourceName}': cursor did not advance past '$since'"
+                }
                 fullMode = ingestChanges(adapter, response, activeKeys) || fullMode
                 storeMetadata(adapter.resourceName, response)
                 changeCount += response.serverChanges.size
@@ -71,11 +102,13 @@ public class SyncEngine(
                 telemetry.onSyncCompleted(
                     adapter.resourceName,
                     response.mode,
-                    response.applied.size,
+                    appliedCount,
                     changeCount,
-                    System.currentTimeMillis() - startedAt,
+                    clockMs() - startedAt,
                 )
             }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (throwable: Throwable) {
             // Surface any failure to telemetry, then rethrow so syncAll's per-resource
             // isolation can record it without aborting the other resources.
@@ -165,7 +198,7 @@ public class SyncEngine(
             SyncCursorRecord(
                 resourceName = resourceName,
                 cursor = response.cursor,
-                lastSyncedAt = System.currentTimeMillis(),
+                lastSyncedAt = clockMs(),
                 fullResyncRequired = response.fullResyncRequired,
                 metadataExtra = response.metadataExtra,
             ),
@@ -183,6 +216,17 @@ public class SyncEngine(
         public const val DEFAULT_LIMIT: Int = 100
     }
 }
+
+/** Like [runCatching], but lets [CancellationException] propagate so structured concurrency holds. */
+@Suppress("TooGenericExceptionCaught")
+private inline fun runCatchingNonCancellation(block: () -> Unit): Result<Unit> =
+    try {
+        Result.success(block())
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (throwable: Throwable) {
+        Result.failure(throwable)
+    }
 
 /** Applies an `applied[]` ack to a row. Top-level so every resource shares one state map. */
 private fun <E : SyncableEntity<E>> E.applyOutcome(ack: SyncAppliedRecord): E {

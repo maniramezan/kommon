@@ -84,4 +84,57 @@ class CompositeAnalyticsClientTest {
             verify { client.flush() }
         }
     }
+
+    @Test
+    fun `one failing client does not stop the others and the failure is logged`() {
+        val failing = mockk<AnalyticsClient>(relaxed = true)
+        val healthy = mockk<AnalyticsClient>(relaxed = true)
+        val logger = mockk<KommonLogger>(relaxed = true)
+        val event = AnalyticsEvent("test_event")
+        io.mockk.every { failing.track(any()) } throws IllegalStateException("sdk down")
+        val composite = CompositeAnalyticsClient(listOf(failing, healthy), logger)
+
+        composite.track(event)
+
+        verify { healthy.track(event) }
+        verify { logger.error(any(), match { it.endsWith(".track failed") }, any<IllegalStateException>()) }
+    }
+
+    @Test
+    fun `vararg constructor forwards to every client`() {
+        val first = mockk<AnalyticsClient>(relaxed = true)
+        val second = mockk<AnalyticsClient>(relaxed = true)
+
+        CompositeAnalyticsClient(first, second).flush()
+
+        verify { first.flush() }
+        verify { second.flush() }
+    }
+
+    @Test
+    fun `logger failure does not prevent delivery to remaining clients`() {
+        val failing = mockk<AnalyticsClient>(relaxed = true)
+        val healthy = mockk<AnalyticsClient>(relaxed = true)
+        val logger = mockk<KommonLogger>(relaxed = true)
+        io.mockk.every { failing.flush() } throws IllegalStateException("sdk down")
+        io.mockk.every { logger.error(any(), any(), any()) } throws IllegalStateException("logger down")
+
+        CompositeAnalyticsClient(listOf(failing, healthy), logger).flush()
+
+        verify { healthy.flush() }
+    }
+
+    @Test
+    fun `client cancellation propagates`() {
+        val failing = mockk<AnalyticsClient>(relaxed = true)
+        val cancellation = java.util.concurrent.CancellationException("cancelled")
+        io.mockk.every { failing.flush() } throws cancellation
+
+        val actual =
+            kotlin.test.assertFailsWith<java.util.concurrent.CancellationException> {
+                CompositeAnalyticsClient(failing).flush()
+            }
+
+        kotlin.test.assertSame(cancellation, actual)
+    }
 }

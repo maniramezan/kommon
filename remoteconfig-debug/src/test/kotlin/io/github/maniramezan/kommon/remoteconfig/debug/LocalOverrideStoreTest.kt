@@ -84,4 +84,15 @@ class LocalOverrideStoreTest {
             store.setOverride(stringKey, ConfigValue.StringVal("enterprise"))
         }
     }
+
+    @Test
+    fun `an override stored under a different type is discarded instead of crashing`() {
+        val store = LocalOverrideStore(TestApplicationProvider.getApplicationContext(), isDebug = true, prefsName = "test-8")
+        store.setOverride(key, ConfigValue.Bool(true))
+        // The same id is later re-declared as an INT key in a newer app version.
+        val retypedKey = ConfigKey.int(id = key.id, description = "now an int", default = 3)
+
+        assertNull(store.override(retypedKey))
+        assertFalse(store.hasOverride(retypedKey))
+    }
 }

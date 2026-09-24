@@ -63,3 +63,22 @@ class LocalizedValueParserTest {
         assertNull(parser.parse(JsonNull))
     }
 }
+
+class LocalizedValueParserEdgeCaseTest {
+    private val parser = LocalizedValueParser()
+
+    @Test
+    fun `blank preferred locale is skipped in favor of a non-blank value`() {
+        assertEquals("hello", parser.parse("""{"en_us":"  ","en_gb":"hello"}"""))
+    }
+
+    @Test
+    fun `locale map without any usable value yields null instead of raw json`() {
+        assertNull(parser.parse("""{"en_us":""}"""))
+    }
+
+    @Test
+    fun `string that merely starts with a brace but is not json passes through`() {
+        assertEquals("{not json", parser.parse("{not json"))
+    }
+}

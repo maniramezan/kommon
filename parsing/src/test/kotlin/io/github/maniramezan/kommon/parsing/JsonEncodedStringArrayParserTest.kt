@@ -33,3 +33,15 @@ class JsonEncodedStringArrayParserTest {
         assertEquals(emptyList(), JsonEncodedStringArrayParser.parseOrList(emptyList()))
     }
 }
+
+class JsonEncodedStringArrayParserEdgeCaseTest {
+    @Test
+    fun `leading whitespace before a json array is still parsed`() {
+        assertEquals("a\nb", JsonEncodedStringArrayParser.parseOrPassthrough("  [\"a\",\"b\"]"))
+    }
+
+    @Test
+    fun `bracketed text that is not json passes through`() {
+        assertEquals("[draft] notes", JsonEncodedStringArrayParser.parseOrPassthrough("[draft] notes"))
+    }
+}

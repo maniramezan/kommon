@@ -8,7 +8,9 @@ android {
 
 dependencies {
     // Test utilities are meant to be on a consumer's test classpath, so expose deps as api.
+    api(project(":foundation"))
     api(project(":sync"))
+    api(project(":authsession"))
     api(project(":analytics-core"))
     api(project(":remoteconfig"))
     api(libs.kotlinx.coroutines.test)
