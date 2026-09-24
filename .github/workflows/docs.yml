@@ -1,11 +1,14 @@
 name: Docs
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -16,24 +19,43 @@ concurrency:
 
 jobs:
   deploy:
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository) ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url || steps.deployment-retry.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
+        if: github.event_name == 'workflow_dispatch'
       - uses: actions/setup-java@v6
+        if: github.event_name == 'workflow_dispatch'
         with:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v6
+        if: github.event_name == 'workflow_dispatch'
 
       - name: Build aggregated API docs
+        if: github.event_name == 'workflow_dispatch'
         run: ./gradlew dokkaGenerate
+
+      - name: Download API docs from CI
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v5
+        with:
+          name: docs-site
+          path: site
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: build/dokka/html
+          path: ${{ github.event_name == 'workflow_run' && 'site' || 'build/dokka/html' }}
 
       # actions/deploy-pages occasionally fails with a transient "Deployment
       # failed, try again later" from GitHub's Pages API even with no real
