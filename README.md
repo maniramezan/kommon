@@ -177,6 +177,17 @@ site.
 ./gradlew dokkaGenerate
 ```
 
+Every Android module's `check` runs `apiCheck` against a committed `api/<module>.api`
+baseline generated from the release AAR's `classes.jar`. This checks public Kotlin and Java
+signatures without depending on AGP's built-in Kotlin being detected by the validator plugin.
+Empty dumps fail verification. Android resources, manifest entries, and dependency exposure
+are outside this signature check.
+
+For an intentional API change, run `./gradlew :<module>:apiDump` and review and commit the
+baseline diff with the implementation. `:design-system` uses Kotlin's multiplatform
+`checkKotlinAbi` and `updateKotlinAbi` tasks instead. Explain breaking changes and migration
+steps in the PR description.
+
 Contributor and AI-agent guidance lives in [`AGENTS.md`](AGENTS.md); repo-specific workflows
 (adding a module, extracting code from an app, changing the sync engine, verifying changes) are
 packaged as skills under [`skills/`](skills/).

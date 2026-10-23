@@ -15,6 +15,8 @@ public class AndroidLibraryConventionPlugin : Plugin<Project> {
             configureAndroidLibrary(this)
         }
 
+        configureApiValidation()
+
         // Test-utility-only modules ship no production logic of their own, so they are
         // exempt from the coverage gate.
         if (!name.contains("testing")) {

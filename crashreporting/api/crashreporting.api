@@ -1,0 +1,48 @@
+public abstract interface class io/github/maniramezan/kommon/crashreporting/CrashlyticsClient {
+	public abstract fun clearUserId ()V
+	public abstract fun log (Ljava/lang/String;)V
+	public abstract fun recordError (Ljava/lang/Throwable;Ljava/util/Map;)V
+	public static synthetic fun recordError$default (Lio/github/maniramezan/kommon/crashreporting/CrashlyticsClient;Ljava/lang/Throwable;Ljava/util/Map;ILjava/lang/Object;)V
+	public abstract fun setCustomValue (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun setUserId (Ljava/lang/String;)V
+}
+
+public final class io/github/maniramezan/kommon/crashreporting/CrashlyticsClient$DefaultImpls {
+	public static synthetic fun recordError$default (Lio/github/maniramezan/kommon/crashreporting/CrashlyticsClient;Ljava/lang/Throwable;Ljava/util/Map;ILjava/lang/Object;)V
+}
+
+public final class io/github/maniramezan/kommon/crashreporting/NoOpCrashlyticsClient : io/github/maniramezan/kommon/crashreporting/CrashlyticsClient {
+	public fun <init> ()V
+	public fun clearUserId ()V
+	public fun log (Ljava/lang/String;)V
+	public fun recordError (Ljava/lang/Throwable;Ljava/util/Map;)V
+	public fun setCustomValue (Ljava/lang/String;Ljava/lang/String;)V
+	public fun setUserId (Ljava/lang/String;)V
+}
+
+public final class io/github/maniramezan/kommon/crashreporting/RecordingCrashlyticsClient : io/github/maniramezan/kommon/crashreporting/CrashlyticsClient {
+	public fun <init> ()V
+	public fun clearUserId ()V
+	public final fun getCustomValues ()Ljava/util/LinkedHashMap;
+	public final fun getLogMessages ()Ljava/util/List;
+	public final fun getRecordedErrors ()Ljava/util/List;
+	public final fun getUserId ()Ljava/lang/String;
+	public fun log (Ljava/lang/String;)V
+	public fun recordError (Ljava/lang/Throwable;Ljava/util/Map;)V
+	public fun setCustomValue (Ljava/lang/String;Ljava/lang/String;)V
+	public fun setUserId (Ljava/lang/String;)V
+}
+
+public final class io/github/maniramezan/kommon/crashreporting/RecordingCrashlyticsClient$RecordedError {
+	public fun <init> (Ljava/lang/Throwable;Ljava/util/Map;)V
+	public final fun component1 ()Ljava/lang/Throwable;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/Throwable;Ljava/util/Map;)Lio/github/maniramezan/kommon/crashreporting/RecordingCrashlyticsClient$RecordedError;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/crashreporting/RecordingCrashlyticsClient$RecordedError;Ljava/lang/Throwable;Ljava/util/Map;ILjava/lang/Object;)Lio/github/maniramezan/kommon/crashreporting/RecordingCrashlyticsClient$RecordedError;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContext ()Ljava/util/Map;
+	public final fun getThrowable ()Ljava/lang/Throwable;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
