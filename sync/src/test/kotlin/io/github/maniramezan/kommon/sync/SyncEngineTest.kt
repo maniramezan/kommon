@@ -5,6 +5,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
@@ -344,5 +345,148 @@ class SyncEngineTest {
             assertTrue(result.exceptionOrNull() is IllegalStateException)
             coVerify(exactly = 3) { api.sync(any()) }
             coVerify(exactly = 1) { cursorStore.save(match { it.cursor == "page-a" }) }
+        }
+
+    @Test
+    fun `snapshot cursor is not persisted until every snapshot page is applied`() =
+        runTest {
+            val adapter = TestResourceAdapter(api)
+            adapter.seed(TestEntity(id = "server-1", value = "kept", serverId = 1, syncState = SyncState.SYNCED))
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            coEvery { api.sync(any()) } returnsMany
+                listOf(
+                    testResponse(
+                        mode = SyncResponse.MODE_FULL,
+                        serverChanges = listOf(TestChange(id = 1, value = "kept", updatedAt = 1L)),
+                        cursor = "snapshot-1",
+                        hasMore = true,
+                    ),
+                ) andThenThrows IllegalStateException("network dropped")
+
+            val result = engine.sync(adapter)
+
+            assertTrue(result.isFailure)
+            // Persisting "snapshot-1" would make the next pass resume mid-snapshot and tombstone page 1's rows.
+            coVerify(exactly = 0) { cursorStore.save(any()) }
+            assertEquals(false, adapter.row("server-1")?.isDeleted)
+        }
+
+    @Test
+    fun `paginated snapshot reconciles against every page and stores the final cursor`() =
+        runTest {
+            val adapter = TestResourceAdapter(api)
+            adapter.seed(TestEntity(id = "server-1", value = "a", serverId = 1, syncState = SyncState.SYNCED))
+            adapter.seed(TestEntity(id = "server-2", value = "b", serverId = 2, syncState = SyncState.SYNCED))
+            adapter.seed(TestEntity(id = "server-3", value = "gone", serverId = 3, syncState = SyncState.SYNCED))
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            coEvery { api.sync(any()) } returnsMany
+                listOf(
+                    testResponse(
+                        mode = SyncResponse.MODE_FULL,
+                        serverChanges = listOf(TestChange(id = 1, value = "a", updatedAt = 1L)),
+                        cursor = "snapshot-1",
+                        hasMore = true,
+                    ),
+                    testResponse(
+                        mode = SyncResponse.MODE_FULL,
+                        serverChanges = listOf(TestChange(id = 2, value = "b", updatedAt = 1L)),
+                        cursor = "snapshot-2",
+                    ),
+                )
+
+            engine.sync(adapter)
+
+            assertEquals(false, adapter.row("server-1")?.isDeleted)
+            assertEquals(false, adapter.row("server-2")?.isDeleted)
+            assertEquals(true, adapter.row("server-3")?.isDeleted)
+            coVerify(exactly = 1) { cursorStore.save(any()) }
+            coVerify { cursorStore.save(match { it.cursor == "snapshot-2" }) }
+        }
+
+    @Test
+    fun `full page after a delta first page does not tombstone rows`() =
+        runTest {
+            val adapter = TestResourceAdapter(api)
+            adapter.seed(TestEntity(id = "server-5", value = "untouched", serverId = 5, syncState = SyncState.SYNCED))
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            coEvery { api.sync(any()) } returnsMany
+                listOf(
+                    testResponse(cursor = "page-1", hasMore = true),
+                    testResponse(mode = SyncResponse.MODE_FULL, cursor = "page-2"),
+                )
+
+            engine.sync(adapter)
+
+            assertEquals(false, adapter.row("server-5")?.isDeleted)
+        }
+
+    @Test
+    fun `pending delete acknowledged with a generic status stays deleted`() =
+        runTest {
+            val adapter = TestResourceAdapter(api)
+            adapter.seed(
+                TestEntity(id = "local-1", value = "bye", serverId = 7, isDeleted = true, syncState = SyncState.PENDING_DELETE),
+            )
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            coEvery { api.sync(any()) } returns
+                testResponse(applied = listOf(SyncAppliedRecord(key = "local-1", id = 7, status = "applied")))
+
+            engine.sync(adapter)
+
+            val row = requireNotNull(adapter.row("local-1"))
+            assertEquals(true, row.isDeleted)
+            assertEquals(SyncState.SYNCED, row.syncState)
+        }
+
+    @Test
+    fun `each page of server changes is written as one batch`() =
+        runTest {
+            val adapter = TestResourceAdapter(api)
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            coEvery { api.sync(any()) } returnsMany
+                listOf(
+                    testResponse(
+                        serverChanges =
+                            listOf(
+                                TestChange(id = 1, value = "a", updatedAt = 1L),
+                                TestChange(id = 2, value = "b", updatedAt = 1L),
+                            ),
+                        cursor = "page-1",
+                        hasMore = true,
+                    ),
+                    testResponse(serverChanges = listOf(TestChange(id = 3, value = "c", updatedAt = 1L)), cursor = "page-2"),
+                )
+
+            engine.sync(adapter)
+
+            assertEquals(listOf(2, 1), adapter.batchSizes)
+        }
+
+    @Test
+    fun `repeated changes in one page merge against the preceding change`() =
+        runTest {
+            val adapter = spyk(TestResourceAdapter(api))
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            every { adapter.toEntity(any(), any()) } answers {
+                val change = firstArg<TestChange>()
+                val existing = secondArg<TestEntity?>()
+                TestEntity(
+                    id = existing?.id ?: "server-${change.id}",
+                    value = existing?.value.orEmpty() + change.value,
+                    serverId = change.id,
+                    syncState = SyncState.SYNCED,
+                )
+            }
+            coEvery { api.sync(any()) } returns
+                testResponse(
+                    serverChanges = listOf(TestChange(1, "a", 1L), TestChange(1, "b", 2L)),
+                    cursor = "next",
+                )
+
+            val result = engine.sync(adapter)
+
+            assertTrue(result.isSuccess)
+            assertEquals("ab", adapter.row("server-1")?.value)
+            assertEquals(listOf(1), adapter.batchSizes)
         }
 }

@@ -26,6 +26,17 @@ tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
     jvmTarget = "17"
 }
 
+// The Node.js and Yarn repositories live in settings.gradle.kts (see the note there); a null base URL
+// stops the Kotlin plugin from adding them to the project, which FAIL_ON_PROJECT_REPOS would reject.
+allprojects {
+    plugins.withType<org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsPlugin> {
+        the<org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsEnvSpec>().downloadBaseUrl.set(null as String?)
+    }
+    plugins.withType<org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnPlugin> {
+        the<org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootEnvSpec>().downloadBaseUrl.set(null as String?)
+    }
+}
+
 // Aggregate the published modules' KDoc into a single Dokka HTML site (build/dokka/html)
 // via `./gradlew dokkaGenerate`.
 dependencies {

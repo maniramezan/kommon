@@ -45,6 +45,9 @@ internal class TestResourceAdapter(
     private val rows: MutableMap<String, TestEntity> = mutableMapOf(),
     override val resourceName: String = "test_resource",
 ) : SyncResourceAdapter<TestEntity, TestUpsert, TestDelete, TestChange> {
+    /** Size of every [upsertAll] batch, in call order. */
+    val batchSizes = mutableListOf<Int>()
+
     fun seed(entity: TestEntity) {
         rows[entity.id] = entity
     }
@@ -67,6 +70,11 @@ internal class TestResourceAdapter(
 
     override suspend fun upsert(entity: TestEntity) {
         rows[entity.id] = entity
+    }
+
+    override suspend fun upsertAll(entities: List<TestEntity>) {
+        batchSizes += entities.size
+        entities.forEach { upsert(it) }
     }
 
     override suspend fun findExisting(change: TestChange): TestEntity? = rows.values.find { it.serverId == change.id }

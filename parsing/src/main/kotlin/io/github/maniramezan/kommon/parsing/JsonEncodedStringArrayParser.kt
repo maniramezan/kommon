@@ -10,14 +10,18 @@ import kotlinx.serialization.json.Json
 public object JsonEncodedStringArrayParser {
     private val json = Json { ignoreUnknownKeys = true }
 
-    /** Parses [value] as a JSON string array and joins it with [joinWith]; passes through as-is otherwise. */
+    /**
+     * Parses [value] as a JSON string array and joins its non-blank items with [joinWith]; passes
+     * through as-is otherwise. An empty or all-blank array yields `""` rather than leaking the raw
+     * JSON into the UI.
+     */
     public fun parseOrPassthrough(
         value: String?,
         joinWith: String = "\n",
     ): String {
         if (value.isNullOrBlank()) return ""
-        val parsedValues = parseStringArray(value)
-        return if (parsedValues.isNullOrEmpty()) value else parsedValues.joinToString(joinWith)
+        val parsedValues = parseStringArray(value) ?: return value
+        return parsedValues.filter(String::isNotBlank).joinToString(joinWith)
     }
 
     /** Parses each value in [values] as a JSON string array (or passes it through as a single-item list), flattened. */

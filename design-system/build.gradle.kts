@@ -1,13 +1,19 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.multiplatform.library)
     alias(libs.plugins.maven.publish)
+    alias(libs.plugins.dokka)
 }
 
 kotlin {
     explicitApi()
+
+    @OptIn(ExperimentalAbiValidation::class)
+    abiValidation()
 
     android {
         namespace = "io.github.maniramezan.kommon.designsystem"
@@ -23,9 +29,18 @@ kotlin {
     iosSimulatorArm64()
     iosX64()
 
+    // Tokens are plain Kotlin, so the web target needs nothing platform-specific. Tests run on
+    // Node rather than a browser, which keeps `check` free of a headless-Chrome requirement.
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        nodejs()
+    }
+
     sourceSets {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
     }
 }
+
+tasks.named("check") { dependsOn("checkKotlinAbi") }

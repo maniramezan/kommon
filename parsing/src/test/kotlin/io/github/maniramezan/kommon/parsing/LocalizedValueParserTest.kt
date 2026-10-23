@@ -1,5 +1,6 @@
 package io.github.maniramezan.kommon.parsing
 
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
@@ -80,5 +81,16 @@ class LocalizedValueParserEdgeCaseTest {
     @Test
     fun `string that merely starts with a brace but is not json passes through`() {
         assertEquals("{not json", parser.parse("{not json"))
+    }
+
+    @Test
+    fun `null locale entries do not leak the raw json`() {
+        assertEquals("bonjour", parser.parse("""{"en_us":null,"fr":"bonjour"}"""))
+    }
+
+    @Test
+    fun `string and element overloads agree on mixed maps`() {
+        val raw = """{"en_us":null,"nested":{"x":"y"},"de":"hallo"}"""
+        assertEquals(parser.parse(Json.parseToJsonElement(raw)), parser.parse(raw))
     }
 }

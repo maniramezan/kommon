@@ -44,4 +44,14 @@ class JsonEncodedStringArrayParserEdgeCaseTest {
     fun `bracketed text that is not json passes through`() {
         assertEquals("[draft] notes", JsonEncodedStringArrayParser.parseOrPassthrough("[draft] notes"))
     }
+
+    @Test
+    fun `empty json array yields an empty string instead of raw json`() {
+        assertEquals("", JsonEncodedStringArrayParser.parseOrPassthrough("[]"))
+    }
+
+    @Test
+    fun `blank array items are dropped like parseOrList does`() {
+        assertEquals("a\nb", JsonEncodedStringArrayParser.parseOrPassthrough("""["a", " ", "b"]"""))
+    }
 }

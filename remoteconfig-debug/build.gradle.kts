@@ -8,7 +8,7 @@ android {
 
 dependencies {
     api(project(":remoteconfig"))
-    implementation(project(":foundation"))
+    api(project(":foundation"))
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test.junit)

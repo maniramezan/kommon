@@ -19,18 +19,22 @@ internal class TraceRecording(
 
     fun finish() {
         val error = failure
-        val status =
-            when (error) {
-                null -> SpanStatus.OK
-                is CancellationException -> SpanStatus.UNSET
-                else -> SpanStatus.ERROR
+        val status: String
+        val spanAttributes: Map<String, Any>
+        when (error) {
+            null -> {
+                status = SpanStatus.OK
+                spanAttributes = attributes
             }
-        val spanAttributes =
-            if (status == SpanStatus.ERROR) {
-                attributes + (ERROR_TYPE_ATTRIBUTE to (error!!::class.qualifiedName ?: "unknown"))
-            } else {
-                attributes
+            is CancellationException -> {
+                status = SpanStatus.UNSET
+                spanAttributes = attributes
             }
+            else -> {
+                status = SpanStatus.ERROR
+                spanAttributes = attributes + (ERROR_TYPE_ATTRIBUTE to (error::class.qualifiedName ?: "unknown"))
+            }
+        }
         val durationMs = (System.nanoTime() - startNanos) / NANOS_PER_MILLI
         // Never replace the block's result, failure, or cancellation with a sink exception.
         runCatching { client.recordSpan(OpenTelemetrySpan(name, kind, status, durationMs, spanAttributes)) }

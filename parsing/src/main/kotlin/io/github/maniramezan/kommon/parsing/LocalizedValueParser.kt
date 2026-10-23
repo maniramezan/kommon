@@ -21,7 +21,8 @@ public class LocalizedValueParser(
     /**
      * Parses a plain string (returned as-is) or a JSON-encoded `{locale: value}` map. A decoded
      * locale map with no usable entry yields `null` (as the [JsonElement] overload does) rather
-     * than leaking the raw JSON into the UI.
+     * than leaking the raw JSON into the UI. Non-string entries are handled exactly as the
+     * [JsonElement] overload handles them.
      */
     public fun parse(value: String?): String? =
         when {
@@ -29,8 +30,9 @@ public class LocalizedValueParser(
             // Cheap shape check first: plain strings (the common case) skip a throwing decode.
             !value.trimStart().startsWith('{') -> value
             else -> {
-                val parsed = runCatching { json.decodeFromString<Map<String, String>>(value) }.getOrNull()
-                if (parsed == null) value else preferredValue(parsed)
+                // Decoded as a tree so null or numeric locale entries don't reject the whole map.
+                val parsed = runCatching { json.parseToJsonElement(value) }.getOrNull() as? JsonObject
+                if (parsed == null) value else preferredValue(parsed.toStringMap())
             }
         }
 
