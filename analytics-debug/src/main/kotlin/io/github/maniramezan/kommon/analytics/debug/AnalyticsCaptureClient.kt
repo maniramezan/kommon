@@ -119,7 +119,7 @@ public class AnalyticsCaptureClient(
         delegate.flush()
     }
 
-    @Suppress("TooGenericExceptionCaught") // A broken debug store must never break analytics.
+    @Suppress("TooGenericExceptionCaught")
     private inline fun capture(entry: () -> AnalyticsDebugEntry) {
         try {
             debugStore.append(entry())
@@ -127,6 +127,7 @@ public class AnalyticsCaptureClient(
             throw cancellation
         } catch (error: Exception) {
             runCatching { logger.error(LOG_TAG, "Analytics debug capture failed", error) }
+                .onFailure { if (it is CancellationException) throw it }
         }
     }
 

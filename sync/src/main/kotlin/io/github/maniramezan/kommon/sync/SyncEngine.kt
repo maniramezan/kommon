@@ -169,21 +169,24 @@ public class SyncEngine(
         if (acknowledged.isNotEmpty()) adapter.upsertAll(acknowledged)
     }
 
-    /** Applies one page's `serverChanges` in a single [SyncResourceAdapter.upsertAll] batch. */
+    /**
+     * Applies one page's `serverChanges` in a single [SyncResourceAdapter.upsertAll] batch.
+     * Repeated keys are merged in response order before the final entity per key is written.
+     */
     private suspend fun <E : SyncableEntity<E>, U, D, C> ingestChanges(
         adapter: SyncResourceAdapter<E, U, D, C>,
         response: SyncResponse<C>,
         activeKeys: MutableSet<String>,
     ) {
-        val incoming =
-            response.serverChanges.mapNotNull { change ->
-                if (!adapter.isChangeDeleted(change)) activeKeys += adapter.changeKey(change)
-                val existing = adapter.findExisting(change)
-                // Pending guard: never clobber a row that still has un-pushed local changes.
-                if (existing != null && existing.syncState != SyncState.SYNCED) return@mapNotNull null
-                adapter.toEntity(change, existing)
-            }
-        if (incoming.isNotEmpty()) adapter.upsertAll(incoming)
+        val incoming = linkedMapOf<String, E>()
+        response.serverChanges.forEach { change ->
+            val key = adapter.changeKey(change)
+            if (!adapter.isChangeDeleted(change)) activeKeys += key
+            val existing = incoming[key] ?: adapter.findExisting(change)
+            if (existing != null && existing.syncState != SyncState.SYNCED) return@forEach
+            incoming[key] = adapter.toEntity(change, existing)
+        }
+        if (incoming.isNotEmpty()) adapter.upsertAll(incoming.values.toList())
     }
 
     private suspend fun <E : SyncableEntity<E>, U, D, C> reconcileFullSnapshot(

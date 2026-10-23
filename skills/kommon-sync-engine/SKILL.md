@@ -18,6 +18,7 @@ matching test in the same commit.
 | **Tombstone guard**: full snapshots tombstone only clean rows absent from the snapshot | `reconcileFullSnapshot` | `full snapshot tombstones...` |
 | **Snapshot integrity**: a snapshot is reconciled only when it starts on the pass's first page, and its cursor is persisted only after every page is applied | `drive` | `snapshot cursor is not persisted...`, `paginated snapshot reconciles...`, `full page after a delta first page...` |
 | A pending delete stays deleted when acked with any non-blocked status | `applyOutcome` | `pending delete acknowledged...` |
+| Repeated server changes for a key merge in response order before batching | `ingestChanges` | `repeated changes in one page...` |
 | Writes are batched through `upsertAll` (acks, each page, tombstones) | `applyAck`, `ingestChanges`, `reconcileFullSnapshot` | `each page of server changes...` |
 | **Pagination drain**: follow `hasMore` using each page's cursor | `drive` | `delta pagination drains...`, `pagination requests each page...` |
 | **Non-advancing cursor guard**: `hasMore` with a missing/repeated cursor fails instead of looping | `drive` | `pagination guard fails...` |

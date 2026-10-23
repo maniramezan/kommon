@@ -5,6 +5,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
@@ -459,5 +460,33 @@ class SyncEngineTest {
             engine.sync(adapter)
 
             assertEquals(listOf(2, 1), adapter.batchSizes)
+        }
+
+    @Test
+    fun `repeated changes in one page merge against the preceding change`() =
+        runTest {
+            val adapter = spyk(TestResourceAdapter(api))
+            coEvery { cursorStore.get(adapter.resourceName) } returns null
+            every { adapter.toEntity(any(), any()) } answers {
+                val change = firstArg<TestChange>()
+                val existing = secondArg<TestEntity?>()
+                TestEntity(
+                    id = existing?.id ?: "server-${change.id}",
+                    value = existing?.value.orEmpty() + change.value,
+                    serverId = change.id,
+                    syncState = SyncState.SYNCED,
+                )
+            }
+            coEvery { api.sync(any()) } returns
+                testResponse(
+                    serverChanges = listOf(TestChange(1, "a", 1L), TestChange(1, "b", 2L)),
+                    cursor = "next",
+                )
+
+            val result = engine.sync(adapter)
+
+            assertTrue(result.isSuccess)
+            assertEquals("ab", adapter.row("server-1")?.value)
+            assertEquals(listOf(1), adapter.batchSizes)
         }
 }

@@ -1,9 +1,11 @@
 package io.github.maniramezan.kommon.analytics.debug
 
 import io.github.maniramezan.kommon.analytics.AnalyticsEvent
+import io.github.maniramezan.kommon.foundation.KommonLogger
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -116,4 +118,51 @@ class AnalyticsCaptureClientTest {
             verify { delegate.track(event) }
             verify { delegate.trackScreen("home", emptyMap()) }
         }
+
+    @Test
+    fun `payload sanitizing and logging failures never stop the delegate`() {
+        val delegate = mockk<io.github.maniramezan.kommon.analytics.AnalyticsClient>(relaxed = true)
+        val debugStore = InMemoryAnalyticsDebugStore()
+        val logger = mockk<KommonLogger>()
+        every { logger.error(any(), any(), any()) } throws IllegalStateException("logger closed")
+        val brokenValue = mockk<Any>()
+        every { brokenValue.toString() } throws IllegalStateException("cannot format")
+        val client = AnalyticsCaptureClient(delegate, debugStore, logger = logger)
+        val event = AnalyticsEvent("purchase", mapOf("value" to brokenValue))
+
+        client.track(event)
+        client.setUserProperties(event.properties)
+
+        verify { delegate.track(event) }
+        verify { delegate.setUserProperties(event.properties) }
+        verify(exactly = 2) { logger.error(any(), any(), any()) }
+        assertEquals(emptyList(), debugStore.entries.value)
+    }
+
+    @Test
+    fun `capture cancellation propagates without calling the delegate`() {
+        val delegate = mockk<io.github.maniramezan.kommon.analytics.AnalyticsClient>(relaxed = true)
+        val debugStore = mockk<AnalyticsDebugStore>()
+        every { debugStore.append(any()) } throws CancellationException("cancelled")
+        val client = AnalyticsCaptureClient(delegate, debugStore)
+        val event = AnalyticsEvent("purchase")
+
+        assertFailsWith<CancellationException> { client.track(event) }
+
+        verify(exactly = 0) { delegate.track(any()) }
+    }
+
+    @Test
+    fun `logging cancellation propagates without calling the delegate`() {
+        val delegate = mockk<io.github.maniramezan.kommon.analytics.AnalyticsClient>(relaxed = true)
+        val debugStore = mockk<AnalyticsDebugStore>()
+        every { debugStore.append(any()) } throws IllegalStateException("store closed")
+        val logger = mockk<KommonLogger>()
+        every { logger.error(any(), any(), any()) } throws CancellationException("cancelled")
+        val client = AnalyticsCaptureClient(delegate, debugStore, logger = logger)
+
+        assertFailsWith<CancellationException> { client.flush() }
+
+        verify(exactly = 0) { delegate.flush() }
+    }
 }
