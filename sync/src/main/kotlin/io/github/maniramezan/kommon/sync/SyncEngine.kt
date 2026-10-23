@@ -35,12 +35,23 @@ public class SyncEngine(
     public suspend fun syncAll(
         adapters: List<SyncResourceAdapter<*, *, *, *>>,
         limit: Int = DEFAULT_LIMIT,
+    ): Result<Unit> = syncAll(adapters, limit, pushBatchSize = Int.MAX_VALUE)
+
+    /**
+     * Runs all resources with opt-in bounded pushes. See [sync] for the server requirements
+     * and the distinction between [limit] and [pushBatchSize]. Failures remain isolated per resource.
+     */
+    public suspend fun syncAll(
+        adapters: List<SyncResourceAdapter<*, *, *, *>>,
+        limit: Int = DEFAULT_LIMIT,
+        pushBatchSize: Int,
     ): Result<Unit> {
         require(limit > 0) { "limit must be greater than zero" }
+        require(pushBatchSize > 0) { "pushBatchSize must be greater than zero" }
         return syncMutex.withLock {
             var firstError: Throwable? = null
             for (adapter in adapters) {
-                runCatchingNonCancellation { drive(adapter, limit) }.onFailure { error ->
+                runCatchingNonCancellation { drive(adapter, limit, pushBatchSize) }.onFailure { error ->
                     val first = firstError
                     when {
                         first == null -> firstError = error
@@ -52,64 +63,68 @@ public class SyncEngine(
         }
     }
 
-    /** Runs a single resource's sync pass. */
+    /** Runs a single resource's sync pass with one unbounded push and response pages of [limit] rows. */
     public suspend fun <E : SyncableEntity<E>, U, D, C> sync(
         adapter: SyncResourceAdapter<E, U, D, C>,
         limit: Int = DEFAULT_LIMIT,
+    ): Result<Unit> = sync(adapter, limit, pushBatchSize = Int.MAX_VALUE)
+
+    /**
+     * Runs a resource with at most [pushBatchSize] pending rows per request, counting upserts
+     * and deletes together. [limit] still controls response page size and is sent unchanged.
+     *
+     * Enable only when the server accepts independent partial pushes and retries by stable row
+     * keys. Each batch's acknowledgements, response pages, and full-snapshot reconciliation finish
+     * before the next batch starts from the saved cursor. A failure stops this resource; already
+     * persisted batches remain committed, and pending rows can be retried on the next pass.
+     *
+     * Pending rows are snapshotted once per pass, bounding its work even if local edits continue.
+     * Rows edited in flight remain pending through the acknowledgement guard. This bounds network
+     * request size; [SyncResourceAdapter.pending] still loads the complete pending list into memory.
+     * Empty pending lists still issue one pull request. Telemetry reports totals across all batches.
+     */
+    public suspend fun <E : SyncableEntity<E>, U, D, C> sync(
+        adapter: SyncResourceAdapter<E, U, D, C>,
+        limit: Int = DEFAULT_LIMIT,
+        pushBatchSize: Int,
     ): Result<Unit> {
         require(limit > 0) { "limit must be greater than zero" }
-        return syncMutex.withLock { runCatchingNonCancellation { drive(adapter, limit) } }
+        require(pushBatchSize > 0) { "pushBatchSize must be greater than zero" }
+        return syncMutex.withLock { runCatchingNonCancellation { drive(adapter, limit, pushBatchSize) } }
     }
 
     @Suppress("TooGenericExceptionCaught") // Any failure must reach telemetry, then rethrow.
     private suspend fun <E : SyncableEntity<E>, U, D, C> drive(
         adapter: SyncResourceAdapter<E, U, D, C>,
         limit: Int,
+        pushBatchSize: Int,
     ) {
         val startedAt = clockMs()
         try {
             reportTelemetry { telemetry.onSyncStarted(adapter.resourceName) }
-            val pendingByKey = adapter.pending().associateBy { adapter.syncKey(it) }
-            val pushResponse = push(adapter, pendingByKey.values.toList(), limit)
-            // Acks arrive on the push response; apply them before a potential fullResync purges synced rows.
-            applyAck(adapter, pushResponse.applied, pendingByKey)
-            val appliedCount = pushResponse.applied.size
-
-            var response = if (pushResponse.fullResyncRequired) fullResync(adapter, limit) else pushResponse
-            // A snapshot is only complete when it starts on this pass's first page; reconciling a
-            // snapshot resumed mid-way would tombstone every row served by the pages already seen.
-            val fullSnapshot = response.mode == SyncResponse.MODE_FULL
-            val activeKeys = mutableSetOf<String>()
-            ingestChanges(adapter, response, activeKeys)
-            // Snapshot cursors are persisted only once the whole snapshot has been applied, so a
-            // failure mid-drain restarts the snapshot instead of resuming it without reconciliation.
-            if (!fullSnapshot) storeMetadata(adapter.resourceName, response)
-            var changeCount = response.serverChanges.size
-
-            val requestedCursors = mutableSetOf<String>()
-            while (response.hasMore) {
-                val since = response.cursor
-                // Pagination guard: a server that keeps answering hasMore without advancing the
-                // cursor would otherwise spin this loop forever.
-                check(since != null) { "Sync '${adapter.resourceName}': hasMore=true without a cursor" }
-                requestedCursors += since
-                response = adapter.api(SyncRequest(since = since, limit = limit))
-                check(!response.hasMore || response.cursor !in requestedCursors) {
-                    "Sync '${adapter.resourceName}': cursor did not advance past '$since'"
-                }
-                ingestChanges(adapter, response, activeKeys)
-                if (!fullSnapshot) storeMetadata(adapter.resourceName, response)
-                changeCount += response.serverChanges.size
-            }
-            if (fullSnapshot) {
-                reconcileFullSnapshot(adapter, activeKeys)
-                storeMetadata(adapter.resourceName, response)
+            val pending =
+                adapter
+                    .pending()
+                    .associateBy { adapter.syncKey(it) }
+                    .values
+                    .toList()
+            val batches = pending.chunked(pushBatchSize).ifEmpty { listOf(emptyList()) }
+            var appliedCount = 0
+            var changeCount = 0
+            var mode = SyncResponse.MODE_DELTA
+            for (batch in batches) {
+                val pushResponse = push(adapter, batch, limit)
+                applyAck(adapter, pushResponse.applied, batch.associateBy { adapter.syncKey(it) })
+                appliedCount += pushResponse.applied.size
+                val pulled = drainChanges(adapter, pushResponse, limit)
+                changeCount += pulled.changeCount
+                mode = pulled.mode
             }
 
             reportTelemetry {
                 telemetry.onSyncCompleted(
                     adapter.resourceName,
-                    response.mode,
+                    mode,
                     appliedCount,
                     changeCount,
                     clockMs() - startedAt,
@@ -125,6 +140,49 @@ public class SyncEngine(
             throw throwable
         }
     }
+
+    private suspend fun <E : SyncableEntity<E>, U, D, C> drainChanges(
+        adapter: SyncResourceAdapter<E, U, D, C>,
+        pushResponse: SyncResponse<C>,
+        limit: Int,
+    ): PullSummary {
+        var response = if (pushResponse.fullResyncRequired) fullResync(adapter, limit) else pushResponse
+        // A snapshot is only complete when it starts on this pass's first page; reconciling a
+        // snapshot resumed mid-way would tombstone every row served by the pages already seen.
+        val fullSnapshot = response.mode == SyncResponse.MODE_FULL
+        val activeKeys = mutableSetOf<String>()
+        ingestChanges(adapter, response, activeKeys)
+        // Snapshot cursors are persisted only once the whole snapshot has been applied, so a
+        // failure mid-drain restarts the snapshot instead of resuming it without reconciliation.
+        if (!fullSnapshot) storeMetadata(adapter.resourceName, response)
+        var changeCount = response.serverChanges.size
+
+        val requestedCursors = mutableSetOf<String>()
+        while (response.hasMore) {
+            val since = response.cursor
+            // Pagination guard: a server that keeps answering hasMore without advancing the
+            // cursor would otherwise spin this loop forever.
+            check(since != null) { "Sync '${adapter.resourceName}': hasMore=true without a cursor" }
+            requestedCursors += since
+            response = adapter.api(SyncRequest(since = since, limit = limit))
+            check(!response.hasMore || response.cursor !in requestedCursors) {
+                "Sync '${adapter.resourceName}': cursor did not advance past '$since'"
+            }
+            ingestChanges(adapter, response, activeKeys)
+            if (!fullSnapshot) storeMetadata(adapter.resourceName, response)
+            changeCount += response.serverChanges.size
+        }
+        if (fullSnapshot) {
+            reconcileFullSnapshot(adapter, activeKeys)
+            storeMetadata(adapter.resourceName, response)
+        }
+        return PullSummary(response.mode, changeCount)
+    }
+
+    private data class PullSummary(
+        val mode: String,
+        val changeCount: Int,
+    )
 
     private suspend fun <E : SyncableEntity<E>, U, D, C> push(
         adapter: SyncResourceAdapter<E, U, D, C>,

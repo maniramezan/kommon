@@ -63,6 +63,23 @@ before invoking `upsertAll`; a transaction around that batch alone cannot preven
 edits from being overwritten. Adapters must enforce conditional writes against the current local
 version when local editing can race sync persistence.
 
+`limit` controls response page size. Existing calls send all pending rows in one push. When
+the server supports independent partial pushes and retries by stable row key, opt into bounded
+requests with a separate `pushBatchSize`:
+
+```kotlin
+engine.sync(tasksAdapter, limit = 100, pushBatchSize = 50)
+engine.syncAll(listOf(tasksAdapter, decksAdapter), pushBatchSize = 50)
+```
+
+The bound counts upserts and deletes together. Each batch's acknowledgements, response pages,
+and snapshot reconciliation finish before the next batch uses the saved cursor. A later failure
+keeps earlier batches committed and leaves unacknowledged rows pending for retry. Pending rows
+are snapshotted once per pass; edits made during sync remain pending for the next pass, and
+`pending()` still loads all pending rows into memory. An empty backlog still pulls once.
+Existing method signatures and wire fields are preserved; batching remains opt-in so consumers
+can confirm their server's partial-push semantics before enabling it.
+
 ### Foundation
 
 ```kotlin

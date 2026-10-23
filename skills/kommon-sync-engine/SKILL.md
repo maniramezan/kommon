@@ -27,6 +27,8 @@ matching test in the same commit.
 | **Cancellation transparency**: `CancellationException` propagates, never becomes `Result.failure` or `onSyncFailed` | `runCatchingNonCancellation`, `drive` | `cancellation propagates...` |
 | Telemetry is observational: sink exceptions never fail a sync | `reportTelemetry` | `telemetry failures do not fail sync` |
 | `appliedCount` in `onSyncCompleted` counts first-page acks | `drive` | `completed telemetry reports first-page acks...` |
+| Opt-in push batches bound upserts + deletes together, fully drain each response, and resume from its committed cursor | `drive`, `drainChanges` | `SyncEngineBatchingTest` |
+| Legacy overloads keep one unbounded push; batching snapshots pending rows once and scopes acks to the sent batch | `sync`, `syncAll`, `drive` | `legacy sync pushes...`, `acknowledgements cannot...`, `mid-flight edits...` |
 | Passes are serialized per engine instance | `syncMutex` | — |
 
 ## Rules
@@ -36,5 +38,9 @@ matching test in the same commit.
 - New adapter hooks must have a default implementation or be flagged as a breaking change (every
   consumer implements `SyncResourceAdapter`).
 - Use the injected `clockMs`, never `System.currentTimeMillis()` directly.
+- `limit` is the response-page bound. Only the explicit `pushBatchSize` overloads split pushes;
+  consumers must confirm their server accepts independent partial pushes and stable-key retries.
+  Each batch must finish its full response drain before the next push; snapshot active-key sets
+  belong to one drain, and telemetry totals span the whole resource pass.
 - Test with `TestResourceAdapter` + mocked `TestApi` (`SyncEngineTestFixtures.kt`); keep fixtures
   generic — never import app types.
