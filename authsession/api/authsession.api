@@ -1,0 +1,85 @@
+public abstract interface class io/github/maniramezan/kommon/authsession/AnonymousAuth {
+	public abstract fun signInAnonymously-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class io/github/maniramezan/kommon/authsession/AuthRepository : io/github/maniramezan/kommon/authsession/AnonymousAuth, io/github/maniramezan/kommon/authsession/AuthStateProvider, io/github/maniramezan/kommon/authsession/EmailPasswordAuth, io/github/maniramezan/kommon/authsession/SocialAuth {
+}
+
+public final class io/github/maniramezan/kommon/authsession/AuthSessionHint {
+	public fun <init> (Z)V
+	public final fun component1 ()Z
+	public final fun copy (Z)Lio/github/maniramezan/kommon/authsession/AuthSessionHint;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/authsession/AuthSessionHint;ZILjava/lang/Object;)Lio/github/maniramezan/kommon/authsession/AuthSessionHint;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHasAccount ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/authsession/AuthSessionInitializer {
+	public static final field TAG Ljava/lang/String;
+	public fun <init> (Lio/github/maniramezan/kommon/authsession/AuthStateProvider;Lio/github/maniramezan/kommon/authsession/AuthTokenProvider;Lio/github/maniramezan/kommon/authsession/AuthSessionStore;Lio/github/maniramezan/kommon/foundation/KommonLogger;Lkotlinx/coroutines/CoroutineScope;)V
+	public synthetic fun <init> (Lio/github/maniramezan/kommon/authsession/AuthStateProvider;Lio/github/maniramezan/kommon/authsession/AuthTokenProvider;Lio/github/maniramezan/kommon/authsession/AuthSessionStore;Lio/github/maniramezan/kommon/foundation/KommonLogger;Lkotlinx/coroutines/CoroutineScope;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun start ()V
+	public final fun stop ()V
+}
+
+public abstract interface class io/github/maniramezan/kommon/authsession/AuthSessionStore {
+	public abstract fun clear ()V
+	public abstract fun read ()Lio/github/maniramezan/kommon/authsession/AuthSessionHint;
+	public abstract fun record (Lio/github/maniramezan/kommon/authsession/AuthSessionHint;)V
+}
+
+public final class io/github/maniramezan/kommon/authsession/AuthSignInErrorMessagesKt {
+	public static final fun authSignInErrorMessage (Ljava/lang/Throwable;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static synthetic fun authSignInErrorMessage$default (Ljava/lang/Throwable;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+}
+
+public abstract interface class io/github/maniramezan/kommon/authsession/AuthStateProvider {
+	public abstract fun authStateFlow ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun deleteAccount-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getCurrentUser ()Lio/github/maniramezan/kommon/authsession/AuthUser;
+	public abstract fun isAnonymous ()Z
+	public abstract fun isAuthenticated ()Z
+	public abstract fun signOut ()V
+}
+
+public abstract interface class io/github/maniramezan/kommon/authsession/AuthTokenProvider {
+	public abstract fun idToken (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun idToken$default (Lio/github/maniramezan/kommon/authsession/AuthTokenProvider;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class io/github/maniramezan/kommon/authsession/AuthTokenProvider$DefaultImpls {
+	public static synthetic fun idToken$default (Lio/github/maniramezan/kommon/authsession/AuthTokenProvider;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class io/github/maniramezan/kommon/authsession/AuthUser {
+	public fun <init> (Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Z
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)Lio/github/maniramezan/kommon/authsession/AuthUser;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/authsession/AuthUser;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/maniramezan/kommon/authsession/AuthUser;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDisplayName ()Ljava/lang/String;
+	public final fun getEmail ()Ljava/lang/String;
+	public final fun getUid ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isAnonymous ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/maniramezan/kommon/authsession/EmailPasswordAuth {
+	public abstract fun createAccountWithEmailAndPassword-0E7RQCE (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun sendPasswordResetEmail-gIAlu-s (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun sendSignInLinkToEmail-0E7RQCE (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun signInWithEmailAndPassword-0E7RQCE (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class io/github/maniramezan/kommon/authsession/SocialAuth {
+	public abstract fun signInWithApple-gIAlu-s (Landroid/app/Activity;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun signInWithGoogle-gIAlu-s (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
