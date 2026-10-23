@@ -14,9 +14,7 @@ description: Verify a kommon change before committing — which Gradle tasks to 
 ./gradlew dokkaGenerate                # CI runs this too; catches broken KDoc links
 ```
 
-`:debug-ui` resolves `io.github.maniramezan.kmpcomponents:components` from Maven Central. If the
-pinned version is not published yet, add `-PuseLocalKmpComponents=true` (and
-`-PlocalKmpComponentsDir=<path>` when the checkout is not at `../KMPComponents`).
+Run `:debug-ui:check` for the opt-in Compose screens; the JVM-only fallback excludes this module.
 
 Also run `:<module>:check` for every module that depends on the one you changed (see the module
 map in `AGENTS.md`; `:testing` depends on almost everything).
@@ -42,7 +40,7 @@ compile-only Android stubs (`stubs/`), with versions read from `gradle/libs.vers
 It retries on 429 because downloads are cached between attempts.
 
 **It does not cover** Android lint, Robolectric tests (`TimberLoggerTest`, `LocalOverrideStoreTest`),
-the JaCoCo gate, Dokka, or the `:design-system` KMP build. When you report results, list these as
+the JaCoCo gate, Dokka, the `:debug-ui` Compose module, or the `:design-system` KMP build. When you report results, list these as
 "not run locally; covered by CI" rather than claiming a full `check` pass.
 
 If you add a new Android API to main sources, add a minimal compile-only stub for it under

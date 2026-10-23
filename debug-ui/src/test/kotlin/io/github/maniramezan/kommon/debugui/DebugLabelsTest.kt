@@ -29,4 +29,13 @@ class DebugLabelsTest {
         assertEquals("Remote config", labels.title)
         assertEquals("Alles zurücksetzen", labels.resetAll)
     }
+
+    @Test
+    fun `every config source uses its localized label`() {
+        val labels = RemoteConfigDebugLabels(sourceDefault = "Fallback", sourceRemote = "Server", sourceOverride = "Local")
+
+        assertEquals("Fallback", labels.sourceLabel(io.github.maniramezan.kommon.remoteconfig.ValueSource.DEFAULT))
+        assertEquals("Server", labels.sourceLabel(io.github.maniramezan.kommon.remoteconfig.ValueSource.REMOTE))
+        assertEquals("Local", labels.sourceLabel(io.github.maniramezan.kommon.remoteconfig.ValueSource.OVERRIDE))
+    }
 }

@@ -1,13 +1,21 @@
 package io.github.maniramezan.kommon.debugui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -17,20 +25,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import io.github.maniramezan.kmpcomponents.ConfirmDialog
-import io.github.maniramezan.kmpcomponents.EmptyState
-import io.github.maniramezan.kmpcomponents.FormTextField
-import io.github.maniramezan.kmpcomponents.MenuPicker
-import io.github.maniramezan.kmpcomponents.SearchField
-import io.github.maniramezan.kmpcomponents.SearchFieldLabels
-import io.github.maniramezan.kmpcomponents.SectionCard
-import io.github.maniramezan.kmpcomponents.SectionHeader
-import io.github.maniramezan.kmpcomponents.StatusTone
-import io.github.maniramezan.kmpcomponents.ThemeSwitch
-import io.github.maniramezan.kmpcomponents.TonalBadge
-import io.github.maniramezan.kmpcomponents.kmpSpacing
+import androidx.compose.ui.unit.dp
 import io.github.maniramezan.kommon.remoteconfig.ConfigKey
 import io.github.maniramezan.kommon.remoteconfig.ConfigValue
 import io.github.maniramezan.kommon.remoteconfig.ConfigValueType
@@ -61,31 +60,28 @@ public fun RemoteConfigDebugScreen(
     var confirmResetAll by rememberSaveable { mutableStateOf(false) }
     val visible = remember(entries, query) { entries.matching(query) }
     val hasOverrides = entries.any { it.source == ValueSource.OVERRIDE }
-    val spacing = MaterialTheme.kmpSpacing
 
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(spacing.medium),
-        verticalArrangement = Arrangement.spacedBy(spacing.small),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item(key = "header") {
-            SectionHeader(
-                title = labels.title,
-                subtitle = labels.description,
-                actionLabel = labels.resetAll.takeIf { hasOverrides },
-                onAction = if (hasOverrides) ({ confirmResetAll = true }) else null,
-            )
+            DebugScreenHeader(labels.title, labels.description, labels.resetAll.takeIf { hasOverrides }) {
+                confirmResetAll = true
+            }
         }
         item(key = "search") {
-            SearchField(
+            DebugScreenSearch(
                 value = query,
                 onValueChange = { query = it },
                 modifier = Modifier.fillMaxWidth(),
-                labels = SearchFieldLabels(placeholder = labels.searchPlaceholder, clear = labels.clearSearch),
+                placeholder = labels.searchPlaceholder,
+                clearLabel = labels.clearSearch,
             )
         }
         if (visible.isEmpty()) {
-            item(key = "empty") { EmptyState(title = labels.noMatches) }
+            item(key = "empty") { Text(labels.noMatches) }
         }
         items(visible, key = { it.key.id }) { entry ->
             ConfigEntryCard(entry, onOverride, onResetOverride, labels)
@@ -93,16 +89,19 @@ public fun RemoteConfigDebugScreen(
     }
 
     if (confirmResetAll) {
-        ConfirmDialog(
-            title = labels.resetAllTitle,
-            message = labels.resetAllMessage,
-            onConfirm = {
-                confirmResetAll = false
-                onResetAll()
+        AlertDialog(
+            title = { Text(labels.resetAllTitle) },
+            text = { Text(labels.resetAllMessage) },
+            onDismissRequest = { confirmResetAll = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmResetAll = false
+                    onResetAll()
+                }) { Text(labels.resetAll) }
             },
-            onDismiss = { confirmResetAll = false },
-            confirmLabel = labels.resetAll,
-            destructive = true,
+            dismissButton = {
+                TextButton(onClick = { confirmResetAll = false }) { Text(labels.cancel) }
+            },
         )
     }
 }
@@ -119,7 +118,7 @@ public fun RemoteConfigDebugScreen(
     modifier: Modifier = Modifier,
     labels: RemoteConfigDebugLabels = RemoteConfigDebugLabels(),
 ) {
-    var entries by remember(client) { mutableStateOf(client.allValues()) }
+    var entries by remember(client, overrideStore) { mutableStateOf(client.allValues()) }
     RemoteConfigDebugScreen(
         entries = entries,
         onOverride = { key, value ->
@@ -148,31 +147,41 @@ private fun ConfigEntryCard(
 ) {
     val key = entry.key
     val allowedValues = key.allowedValues
-    SectionCard(
-        title = key.id,
-        modifier = Modifier.fillMaxWidth(),
-        description = key.description.takeIf { it.isNotBlank() },
-        action = { SourceBadge(entry.source, labels) },
-    ) {
-        when {
-            key.valueType == ConfigValueType.BOOL ->
-                ThemeSwitch(
-                    checked = entry.value.boolValue,
-                    onCheckedChange = { onOverride(key, ConfigValue.Bool(it)) },
-                    label = labels.overrideValue,
-                )
-            allowedValues != null ->
-                MenuPicker(
-                    items = allowedValues,
-                    selected = entry.value.stringValue,
-                    onSelect = { onOverride(key, ConfigValue.StringVal(it)) },
-                    label = labels.overrideValue,
-                    itemLabel = { it },
-                )
-            else -> ConfigValueEditor(entry, onOverride, labels)
-        }
-        if (entry.source == ValueSource.OVERRIDE) {
-            TextButton(onClick = { onResetOverride(key) }) { Text(labels.reset) }
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(key.id)
+            if (key.description.isNotBlank()) Text(key.description)
+            Text(labels.sourceLabel(entry.source))
+            when {
+                key.valueType == ConfigValueType.BOOL -> {
+                    Text(labels.overrideValue)
+                    Switch(
+                        checked = entry.value.boolValue,
+                        onCheckedChange = { onOverride(key, ConfigValue.Bool(it)) },
+                        modifier = Modifier.semantics { contentDescription = "${key.id}: ${labels.overrideValue}" },
+                    )
+                }
+                allowedValues != null -> {
+                    var expanded by remember { mutableStateOf(false) }
+                    Box {
+                        TextButton(onClick = { expanded = true }) {
+                            Text("${labels.overrideValue}: ${entry.value.stringValue}")
+                        }
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            allowedValues.forEach { value ->
+                                DropdownMenuItem(text = { Text(value) }, onClick = {
+                                    expanded = false
+                                    onOverride(key, ConfigValue.StringVal(value))
+                                })
+                            }
+                        }
+                    }
+                }
+                else -> ConfigValueEditor(entry, onOverride, labels)
+            }
+            if (entry.source == ValueSource.OVERRIDE) {
+                TextButton(onClick = { onResetOverride(key) }) { Text(labels.reset) }
+            }
         }
     }
 }
@@ -188,30 +197,19 @@ private fun ConfigValueEditor(
     val parsed = remember(key, draft) { key.parseOverride(draft) }
     val canApply = parsed != null && parsed != entry.value
     val apply = { parsed?.let { onOverride(key, it) } }
-    FormTextField(
+    OutlinedTextField(
         value = draft,
         onValueChange = { draft = it },
-        label = labels.overrideValue,
+        label = { Text("${key.id}: ${labels.overrideValue}") },
         modifier = Modifier.fillMaxWidth(),
-        errorText = labels.invalidValue.takeIf { parsed == null },
+        isError = parsed == null,
+        supportingText = if (parsed == null) ({ Text(labels.invalidValue) }) else null,
         keyboardOptions = KeyboardOptions(keyboardType = key.valueType.keyboardType(), imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { if (canApply) apply() }),
-        trailingContent = {
+        trailingIcon = {
             TextButton(onClick = { apply() }, enabled = canApply) { Text(labels.apply) }
         },
     )
-}
-
-@Composable
-private fun SourceBadge(
-    source: ValueSource,
-    labels: RemoteConfigDebugLabels,
-) {
-    when (source) {
-        ValueSource.OVERRIDE -> TonalBadge(text = labels.sourceOverride, tone = StatusTone.WARNING)
-        ValueSource.REMOTE -> TonalBadge(text = labels.sourceRemote, tone = StatusTone.INFO)
-        ValueSource.DEFAULT -> TonalBadge(text = labels.sourceDefault, color = MaterialTheme.colorScheme.outline)
-    }
 }
 
 private fun ConfigValueType.keyboardType(): KeyboardType =

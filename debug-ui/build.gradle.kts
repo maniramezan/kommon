@@ -13,7 +13,7 @@ android {
 dependencies {
     api(project(":remoteconfig-debug"))
     api(project(":analytics-debug"))
-    api(libs.kmpcomponents)
+    api(libs.androidx.compose.material3)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test.junit)
