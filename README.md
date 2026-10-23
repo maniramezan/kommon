@@ -21,6 +21,7 @@ authentication, analytics, remote-config, and telemetry SDKs.
 | `remoteconfig` / `remoteconfig-debug` | Typed, validated config keys, a shared resolver, and debug-only local overrides. |
 | `parsing` | Localized-value and JSON string-array parsers. |
 | `design-system` | Kotlin Multiplatform design tokens (colors, spacing, shapes, typography, motion) and WCAG contrast helpers. |
+| `debug-ui` | Compose debug screens for remote-config overrides and captured analytics, using Compose Material 3. |
 | `testing` | Consumer test fakes for sync, auth, analytics, logging, and remote config. |
 
 ## Installation
@@ -153,6 +154,25 @@ class FirebaseConfigClient(
 `ConfigKey` validates itself at construction (the default must match the declared type and any
 `allowedValues`), so a mistyped key fails at app start rather than at the call site.
 
+### Debug screens
+
+`debug-ui` renders the debug modules with Compose Material 3. Add it with
+`debugImplementation("io.github.maniramezan.kommon:debug-ui:<version>")`, wrap the screens in
+`MaterialTheme`, and keep
+them behind a debug-only entry point:
+
+```kotlin
+MaterialTheme {
+    RemoteConfigDebugScreen(client = configClient, overrideStore = localOverrideStore)
+}
+MaterialTheme {
+    AnalyticsDebugScreen(store = analyticsDebugStore)
+}
+```
+
+Both screens also have stateless overloads that take the entries and callbacks directly, and every
+string is a parameter (`RemoteConfigDebugLabels`, `AnalyticsDebugLabels`) for localization.
+
 ### Parsing
 
 ```kotlin
@@ -208,3 +228,15 @@ steps in the PR description.
 Contributor and AI-agent guidance lives in [`AGENTS.md`](AGENTS.md); repo-specific workflows
 (adding a module, extracting code from an app, changing the sync engine, verifying changes) are
 packaged as skills under [`skills/`](skills/).
+
+### Release automation
+
+Release runs after successful push CI on `main`. The release GitHub App uses the existing
+`RELEASE_PLEASE_APP_ID` and `RELEASE_PLEASE_APP_PRIVATE_KEY` environment secrets and requires
+Contents write and Workflows write permissions. Approve those permissions on the app installation
+before merging workflow changes. Token creation runs before Maven publishing.
+
+If Maven publishing completes but GitHub tagging fails, recover the tag at the exact source commit
+from that publishing run and create its GitHub Release. A Maven version cannot be overwritten;
+rerunning publication for the same version will fail. Version `0.2.0` was recovered at
+`b7f83d6142a41ba4a7b6e6304dddf8e5778ff93c`, the commit used by its September 24 publishing run.

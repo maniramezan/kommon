@@ -28,15 +28,27 @@ jobs:
     name: Publish Maven Central and GitHub Release
     runs-on: ubuntu-latest
     if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     environment: secrets
     steps:
+      - name: Create release token
+        id: release-token
+        uses: actions/create-github-app-token@v3.3.0
+        with:
+          app-id: ${{ secrets.RELEASE_PLEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-workflows: write
+
       - name: Checkout
         uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.ref }}
           fetch-depth: 0
+          token: ${{ steps.release-token.outputs.token }}
 
       - name: Compute next version
         id: version
@@ -155,7 +167,7 @@ jobs:
       - name: Create tag and GitHub Release
         if: steps.version.outputs.release == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail

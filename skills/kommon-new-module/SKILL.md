@@ -26,7 +26,7 @@ description: Checklist for adding a new Gradle module (artifact) to kommon — s
    }
    ```
    Never hardcode versions — add them to `gradle/libs.versions.toml` (check the latest stable first).
-   No DI annotations, no Compose, no HTTP clients (see "Current Architecture Decisions" in `AGENTS.md`).
+   No DI annotations or HTTP clients; Compose is allowed only in the opt-in :debug-ui module (see "Current Architecture Decisions" in `AGENTS.md`).
 3. **Wire it up:**
    - `settings.gradle.kts` → `include(":<module>")`.
    - Root `build.gradle.kts` → `dokka(project(":<module>"))`. Publishing (vanniktech) and Dokka are

@@ -19,6 +19,8 @@ private val COVERAGE_EXCLUSIONS =
         // than chase an unmeasurable number; this does not exempt them from having tests.
         "**/TimberLogger*.class",
         "**/LocalOverrideStore*.class",
+        "**/debugui/*ScreenKt*.class",
+        "**/debugui/ComposableSingletons*.class",
         // Interface with only abstract members plus default-argument synthetic dispatch
         // (`DefaultImpls`); there is no real logic to cover.
         "**/KommonLogger*.class",

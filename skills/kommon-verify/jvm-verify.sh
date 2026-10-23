@@ -28,7 +28,7 @@ if [ ! -f "$work/timber.jar" ]; then
 fi
 
 # Every module that applies kommon.android.library (i.e. everything but the KMP design-system).
-modules=$(grep -l 'kommon.android.library' "$repo"/*/build.gradle.kts | xargs -n1 dirname | xargs -n1 basename | sort)
+modules=$(grep -l 'kommon.android.library' "$repo"/*/build.gradle.kts | xargs -n1 dirname | xargs -n1 basename | sort | rg -v '^debug-ui$')
 mods_kts=$(printf '"%s", ' $modules)
 
 cat > "$work/settings.gradle.kts" <<EOF
