@@ -1,13 +1,19 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.multiplatform.library)
     alias(libs.plugins.maven.publish)
+    alias(libs.plugins.dokka)
 }
 
 kotlin {
     explicitApi()
+
+    // Same API guard as the Android modules get from `kommon.android.library`.
+    @OptIn(ExperimentalAbiValidation::class)
+    abiValidation()
 
     android {
         namespace = "io.github.maniramezan.kommon.designsystem"
@@ -29,3 +35,5 @@ kotlin {
         }
     }
 }
+
+tasks.named("check") { dependsOn("checkKotlinAbi") }
