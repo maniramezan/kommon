@@ -78,8 +78,12 @@ public final class io/github/maniramezan/kommon/sync/SyncEngine {
 	public synthetic fun <init> (Lio/github/maniramezan/kommon/sync/SyncCursorStore;Lio/github/maniramezan/kommon/sync/SyncTelemetrySink;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun sync-0E7RQCE (Lio/github/maniramezan/kommon/sync/SyncResourceAdapter;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun sync-0E7RQCE$default (Lio/github/maniramezan/kommon/sync/SyncEngine;Lio/github/maniramezan/kommon/sync/SyncResourceAdapter;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun sync-BWLJW6A (Lio/github/maniramezan/kommon/sync/SyncResourceAdapter;IILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun sync-BWLJW6A$default (Lio/github/maniramezan/kommon/sync/SyncEngine;Lio/github/maniramezan/kommon/sync/SyncResourceAdapter;IILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun syncAll-0E7RQCE (Ljava/util/List;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun syncAll-0E7RQCE$default (Lio/github/maniramezan/kommon/sync/SyncEngine;Ljava/util/List;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun syncAll-BWLJW6A (Ljava/util/List;IILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun syncAll-BWLJW6A$default (Lio/github/maniramezan/kommon/sync/SyncEngine;Ljava/util/List;IILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class io/github/maniramezan/kommon/sync/SyncEngine$Companion {
