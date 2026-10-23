@@ -18,6 +18,7 @@ dependencies {
     api(libs.mockk)
     api(libs.turbine)
     api(libs.junit)
+    api(libs.testcommons.core)
 
     testImplementation(libs.kotlin.test.junit)
 }

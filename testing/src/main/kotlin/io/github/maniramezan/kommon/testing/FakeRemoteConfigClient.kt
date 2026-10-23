@@ -5,6 +5,7 @@ import io.github.maniramezan.kommon.remoteconfig.ConfigValue
 import io.github.maniramezan.kommon.remoteconfig.RemoteConfigClient
 import io.github.maniramezan.kommon.remoteconfig.ResolvedConfigEntry
 import io.github.maniramezan.kommon.remoteconfig.ValueSource
+import io.github.maniramezan.testcommons.CallRecorder
 
 /**
  * In-memory [RemoteConfigClient] fake seeded with fixed values, for consumer unit tests.
@@ -19,8 +20,10 @@ public class FakeRemoteConfigClient(
 ) : RemoteConfigClient {
     private val values = overrides.toMutableMap()
 
-    public var fetchAndActivateCallCount: Int = 0
-        private set
+    private val fetchAndActivateCalls = CallRecorder<Unit>()
+
+    public val fetchAndActivateCallCount: Int
+        get() = fetchAndActivateCalls.count
 
     /** Replaces the value returned for [key]; rejects values of the wrong type. */
     public fun set(
@@ -37,7 +40,7 @@ public class FakeRemoteConfigClient(
     }
 
     override suspend fun fetchAndActivate() {
-        fetchAndActivateCallCount += 1
+        fetchAndActivateCalls.record(Unit)
     }
 
     override fun value(key: ConfigKey): ConfigValue = values[key] ?: key.defaultValue
