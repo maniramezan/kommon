@@ -21,6 +21,7 @@ authentication, analytics, remote-config, and telemetry SDKs.
 | `remoteconfig` / `remoteconfig-debug` | Typed, validated config keys, a shared resolver, and debug-only local overrides. |
 | `parsing` | Localized-value and JSON string-array parsers. |
 | `design-system` | Kotlin Multiplatform design tokens (colors, spacing, shapes, typography, motion) and WCAG contrast helpers. |
+| `debug-ui` | Compose debug screens for remote-config overrides and captured analytics, built on [KMPComponents](https://github.com/ArjangConsulting/KMPComponents). |
 | `testing` | Consumer test fakes for sync, auth, analytics, logging, and remote config. |
 
 ## Installation
@@ -153,6 +154,23 @@ class FirebaseConfigClient(
 `ConfigKey` validates itself at construction (the default must match the declared type and any
 `allowedValues`), so a mistyped key fails at app start rather than at the call site.
 
+### Debug screens
+
+`debug-ui` renders the debug modules with KMPComponents. Wrap the screens in `KmpTheme` and keep
+them behind a debug-only entry point:
+
+```kotlin
+KmpTheme {
+    RemoteConfigDebugScreen(client = configClient, overrideStore = localOverrideStore)
+}
+KmpTheme {
+    AnalyticsDebugScreen(store = analyticsDebugStore)
+}
+```
+
+Both screens also have stateless overloads that take the entries and callbacks directly, and every
+string is a parameter (`RemoteConfigDebugLabels`, `AnalyticsDebugLabels`) for localization.
+
 ### Parsing
 
 ```kotlin
@@ -192,6 +210,7 @@ site.
 ```bash
 ./gradlew check
 ./gradlew dokkaGenerate
+./gradlew check -PuseLocalKmpComponents=true   # build debug-ui against a sibling KMPComponents checkout
 ```
 
 Every Android module's `check` runs `apiCheck` against a committed `api/<module>.api`

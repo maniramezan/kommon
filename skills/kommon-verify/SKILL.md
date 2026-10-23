@@ -14,6 +14,10 @@ description: Verify a kommon change before committing — which Gradle tasks to 
 ./gradlew dokkaGenerate                # CI runs this too; catches broken KDoc links
 ```
 
+`:debug-ui` resolves `io.github.maniramezan.kmpcomponents:components` from Maven Central. If the
+pinned version is not published yet, add `-PuseLocalKmpComponents=true` (and
+`-PlocalKmpComponentsDir=<path>` when the checkout is not at `../KMPComponents`).
+
 Also run `:<module>:check` for every module that depends on the one you changed (see the module
 map in `AGENTS.md`; `:testing` depends on almost everything).
 
