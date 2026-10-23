@@ -1,0 +1,219 @@
+public final class io/github/maniramezan/kommon/sync/NoOpSyncTelemetrySink : io/github/maniramezan/kommon/sync/SyncTelemetrySink {
+	public static final field INSTANCE Lio/github/maniramezan/kommon/sync/NoOpSyncTelemetrySink;
+	public fun onFullResync (Ljava/lang/String;)V
+	public fun onItemBlocked (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun onSyncCompleted (Ljava/lang/String;Ljava/lang/String;IIJ)V
+	public fun onSyncFailed (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun onSyncStarted (Ljava/lang/String;)V
+}
+
+public final class io/github/maniramezan/kommon/sync/SyncAppliedRecord {
+	public static final field Companion Lio/github/maniramezan/kommon/sync/SyncAppliedRecord$Companion;
+	public static final field STATUS_BLOCKED Ljava/lang/String;
+	public static final field STATUS_DELETED Ljava/lang/String;
+	public static final field STATUS_REJECTED Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Integer;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/Long;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;)Lio/github/maniramezan/kommon/sync/SyncAppliedRecord;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/sync/SyncAppliedRecord;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;ILjava/lang/Object;)Lio/github/maniramezan/kommon/sync/SyncAppliedRecord;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/Integer;
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getReason ()Ljava/lang/String;
+	public final fun getStatus ()Ljava/lang/String;
+	public final fun getUpdatedAt ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class io/github/maniramezan/kommon/sync/SyncAppliedRecord$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lio/github/maniramezan/kommon/sync/SyncAppliedRecord$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/maniramezan/kommon/sync/SyncAppliedRecord;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/maniramezan/kommon/sync/SyncAppliedRecord;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class io/github/maniramezan/kommon/sync/SyncAppliedRecord$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class io/github/maniramezan/kommon/sync/SyncCursorRecord {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ZLjava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ZLjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/Long;
+	public final fun component4 ()Z
+	public final fun component5 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ZLjava/util/Map;)Lio/github/maniramezan/kommon/sync/SyncCursorRecord;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/sync/SyncCursorRecord;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ZLjava/util/Map;ILjava/lang/Object;)Lio/github/maniramezan/kommon/sync/SyncCursorRecord;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCursor ()Ljava/lang/String;
+	public final fun getFullResyncRequired ()Z
+	public final fun getLastSyncedAt ()Ljava/lang/Long;
+	public final fun getMetadataExtra ()Ljava/util/Map;
+	public final fun getResourceName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/maniramezan/kommon/sync/SyncCursorStore {
+	public abstract fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun save (Lio/github/maniramezan/kommon/sync/SyncCursorRecord;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/maniramezan/kommon/sync/SyncEngine {
+	public static final field Companion Lio/github/maniramezan/kommon/sync/SyncEngine$Companion;
+	public static final field DEFAULT_LIMIT I
+	public fun <init> (Lio/github/maniramezan/kommon/sync/SyncCursorStore;Lio/github/maniramezan/kommon/sync/SyncTelemetrySink;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lio/github/maniramezan/kommon/sync/SyncCursorStore;Lio/github/maniramezan/kommon/sync/SyncTelemetrySink;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun sync-0E7RQCE (Lio/github/maniramezan/kommon/sync/SyncResourceAdapter;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun sync-0E7RQCE$default (Lio/github/maniramezan/kommon/sync/SyncEngine;Lio/github/maniramezan/kommon/sync/SyncResourceAdapter;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun syncAll-0E7RQCE (Ljava/util/List;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun syncAll-0E7RQCE$default (Lio/github/maniramezan/kommon/sync/SyncEngine;Ljava/util/List;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class io/github/maniramezan/kommon/sync/SyncEngine$Companion {
+}
+
+public final class io/github/maniramezan/kommon/sync/SyncRequest {
+	public static final field Companion Lio/github/maniramezan/kommon/sync/SyncRequest$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;ILjava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;ILjava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;ILjava/util/List;Ljava/util/List;)Lio/github/maniramezan/kommon/sync/SyncRequest;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/sync/SyncRequest;Ljava/lang/String;ILjava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/github/maniramezan/kommon/sync/SyncRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDeletes ()Ljava/util/List;
+	public final fun getLimit ()I
+	public final fun getSince ()Ljava/lang/String;
+	public final fun getUpserts ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class io/github/maniramezan/kommon/sync/SyncRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public fun <init> (Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/KSerializer;)V
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/maniramezan/kommon/sync/SyncRequest;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/maniramezan/kommon/sync/SyncRequest;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class io/github/maniramezan/kommon/sync/SyncRequest$Companion {
+	public final fun serializer (Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/KSerializer;)Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class io/github/maniramezan/kommon/sync/SyncResourceAdapter {
+	public abstract fun activeRows (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun api (Lio/github/maniramezan/kommon/sync/SyncRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun changeKey (Ljava/lang/Object;)Ljava/lang/String;
+	public abstract fun findExisting (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getResourceName ()Ljava/lang/String;
+	public abstract fun isChangeDeleted (Ljava/lang/Object;)Z
+	public abstract fun pending (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun purgeSynced (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun reload (Lio/github/maniramezan/kommon/sync/SyncableEntity;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun syncKey (Lio/github/maniramezan/kommon/sync/SyncableEntity;)Ljava/lang/String;
+	public abstract fun toDelete (Lio/github/maniramezan/kommon/sync/SyncableEntity;)Ljava/lang/Object;
+	public abstract fun toEntity (Ljava/lang/Object;Lio/github/maniramezan/kommon/sync/SyncableEntity;)Lio/github/maniramezan/kommon/sync/SyncableEntity;
+	public abstract fun toUpsert (Lio/github/maniramezan/kommon/sync/SyncableEntity;)Ljava/lang/Object;
+	public abstract fun upsert (Lio/github/maniramezan/kommon/sync/SyncableEntity;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun upsertAll (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/maniramezan/kommon/sync/SyncResourceAdapter$DefaultImpls {
+	public static fun upsertAll (Lio/github/maniramezan/kommon/sync/SyncResourceAdapter;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/maniramezan/kommon/sync/SyncResponse {
+	public static final field Companion Lio/github/maniramezan/kommon/sync/SyncResponse$Companion;
+	public static final field MODE_DELTA Ljava/lang/String;
+	public static final field MODE_FULL Ljava/lang/String;
+	public fun <init> (ILjava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ZZLjava/util/Map;)V
+	public synthetic fun <init> (ILjava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ZZLjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Z
+	public final fun component7 ()Z
+	public final fun component8 ()Ljava/util/Map;
+	public final fun copy (ILjava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ZZLjava/util/Map;)Lio/github/maniramezan/kommon/sync/SyncResponse;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/sync/SyncResponse;ILjava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ZZLjava/util/Map;ILjava/lang/Object;)Lio/github/maniramezan/kommon/sync/SyncResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getApplied ()Ljava/util/List;
+	public final fun getCursor ()Ljava/lang/String;
+	public final fun getFullResyncRequired ()Z
+	public final fun getHasMore ()Z
+	public final fun getMetadataExtra ()Ljava/util/Map;
+	public final fun getMode ()Ljava/lang/String;
+	public final fun getServerChanges ()Ljava/util/List;
+	public final fun getSyncVersion ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class io/github/maniramezan/kommon/sync/SyncResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public fun <init> (Lkotlinx/serialization/KSerializer;)V
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/maniramezan/kommon/sync/SyncResponse;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/maniramezan/kommon/sync/SyncResponse;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class io/github/maniramezan/kommon/sync/SyncResponse$Companion {
+	public final fun serializer (Lkotlinx/serialization/KSerializer;)Lkotlinx/serialization/KSerializer;
+}
+
+public final class io/github/maniramezan/kommon/sync/SyncState {
+	public static final field BLOCKED Ljava/lang/String;
+	public static final field INSTANCE Lio/github/maniramezan/kommon/sync/SyncState;
+	public static final field PENDING_CREATE Ljava/lang/String;
+	public static final field PENDING_DELETE Ljava/lang/String;
+	public static final field PENDING_UPDATE Ljava/lang/String;
+	public static final field SYNCED Ljava/lang/String;
+}
+
+public abstract interface class io/github/maniramezan/kommon/sync/SyncTelemetrySink {
+	public abstract fun onFullResync (Ljava/lang/String;)V
+	public abstract fun onItemBlocked (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun onSyncCompleted (Ljava/lang/String;Ljava/lang/String;IIJ)V
+	public abstract fun onSyncFailed (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun onSyncStarted (Ljava/lang/String;)V
+}
+
+public abstract interface class io/github/maniramezan/kommon/sync/SyncableEntity {
+	public abstract fun getLocalUpdatedAt ()J
+	public abstract fun getServerId ()Ljava/lang/Integer;
+	public abstract fun getSyncState ()Ljava/lang/String;
+	public abstract fun getUpdatedAt ()Ljava/lang/Long;
+	public abstract fun isDeleted ()Z
+	public fun tombstone ()Lio/github/maniramezan/kommon/sync/SyncableEntity;
+	public abstract fun withSync (Ljava/lang/Integer;Ljava/lang/Long;ZLjava/lang/String;)Lio/github/maniramezan/kommon/sync/SyncableEntity;
+}
+
+public final class io/github/maniramezan/kommon/sync/SyncableEntity$DefaultImpls {
+	public static fun tombstone (Lio/github/maniramezan/kommon/sync/SyncableEntity;)Lio/github/maniramezan/kommon/sync/SyncableEntity;
+}
+

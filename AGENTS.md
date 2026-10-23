@@ -114,6 +114,12 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   artifact with Robolectric available for tests that need it).
 - `explicit-api = strict` is enabled for all non-test compilations — every public declaration needs
   an explicit visibility modifier and return type.
+- Every `kommon.android.library` module has an `api/<module>.api` JVM signature baseline.
+  The convention wires BCV's task types directly to the release AAR's `classes.jar`, bypassing
+  AGP 9 built-in Kotlin detection. `check` runs `apiCheck`; empty dumps fail. For intentional
+  API changes, run `:<module>:apiDump`, review the baseline diff, and commit it with the code.
+  This does not validate Android resources, manifests, or dependency exposure. `:design-system`
+  retains its separate multiplatform `checkKotlinAbi`/`updateKotlinAbi` workflow.
 
 ## Coverage And Testing Conventions
 

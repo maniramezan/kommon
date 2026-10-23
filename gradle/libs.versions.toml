@@ -1,6 +1,8 @@
 [versions]
 agp = "9.4.1"
 kotlin = "2.4.21"
+binaryCompatibilityValidator = "0.18.2"
+asm = "9.11.1"
 coroutines = "1.11.0"
 kotlinxSerialization = "1.12.0"
 
@@ -21,6 +23,10 @@ turbine = "1.2.1"
 # Build-logic classpath
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+binary-compatibility-validator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
+kotlin-metadata-jvm = { module = "org.jetbrains.kotlin:kotlin-metadata-jvm", version.ref = "kotlin" }
+asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+asm-tree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
 
 # AndroidX
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCoreKtx" }

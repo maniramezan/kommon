@@ -1,0 +1,154 @@
+public final class io/github/maniramezan/kommon/testing/FakeAuthRepository : io/github/maniramezan/kommon/authsession/AuthRepository {
+	public static final field ANONYMOUS_UID Ljava/lang/String;
+	public static final field Companion Lio/github/maniramezan/kommon/testing/FakeAuthRepository$Companion;
+	public fun <init> ()V
+	public fun <init> (Lio/github/maniramezan/kommon/authsession/AuthUser;)V
+	public synthetic fun <init> (Lio/github/maniramezan/kommon/authsession/AuthUser;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun authStateFlow ()Lkotlinx/coroutines/flow/Flow;
+	public fun authStateFlow ()Lkotlinx/coroutines/flow/StateFlow;
+	public fun createAccountWithEmailAndPassword-0E7RQCE (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteAccount-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun emit (Lio/github/maniramezan/kommon/authsession/AuthUser;)V
+	public fun getCurrentUser ()Lio/github/maniramezan/kommon/authsession/AuthUser;
+	public final fun getNextFailure ()Ljava/lang/Throwable;
+	public final fun getPasswordResetEmails ()Ljava/util/List;
+	public final fun getSignInLinkEmails ()Ljava/util/List;
+	public final fun getSignOutCount ()I
+	public fun isAnonymous ()Z
+	public fun isAuthenticated ()Z
+	public fun sendPasswordResetEmail-gIAlu-s (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun sendSignInLinkToEmail-0E7RQCE (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun setNextFailure (Ljava/lang/Throwable;)V
+	public fun signInAnonymously-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun signInWithApple-gIAlu-s (Landroid/app/Activity;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun signInWithEmailAndPassword-0E7RQCE (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun signInWithGoogle-gIAlu-s (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun signOut ()V
+}
+
+public final class io/github/maniramezan/kommon/testing/FakeAuthRepository$Companion {
+}
+
+public final class io/github/maniramezan/kommon/testing/FakeAuthTokenProvider : io/github/maniramezan/kommon/authsession/AuthTokenProvider {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getRequests ()Ljava/util/List;
+	public final fun getToken ()Ljava/lang/String;
+	public fun idToken (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun setToken (Ljava/lang/String;)V
+}
+
+public final class io/github/maniramezan/kommon/testing/FakeRemoteConfigClient : io/github/maniramezan/kommon/remoteconfig/RemoteConfigClient {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Map;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/Map;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun allValues ()Ljava/util/List;
+	public final fun clear (Lio/github/maniramezan/kommon/remoteconfig/ConfigKey;)V
+	public fun fetchAndActivate (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getFetchAndActivateCallCount ()I
+	public final fun set (Lio/github/maniramezan/kommon/remoteconfig/ConfigKey;Lio/github/maniramezan/kommon/remoteconfig/ConfigValue;)V
+	public fun value (Lio/github/maniramezan/kommon/remoteconfig/ConfigKey;)Lio/github/maniramezan/kommon/remoteconfig/ConfigValue;
+}
+
+public final class io/github/maniramezan/kommon/testing/FakeSyncCursorStore : io/github/maniramezan/kommon/sync/SyncCursorStore {
+	public fun <init> ()V
+	public fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun recordFor (Ljava/lang/String;)Lio/github/maniramezan/kommon/sync/SyncCursorRecord;
+	public fun save (Lio/github/maniramezan/kommon/sync/SyncCursorRecord;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/maniramezan/kommon/testing/InMemoryAuthSessionStore : io/github/maniramezan/kommon/authsession/AuthSessionStore {
+	public fun <init> ()V
+	public fun <init> (Lio/github/maniramezan/kommon/authsession/AuthSessionHint;)V
+	public synthetic fun <init> (Lio/github/maniramezan/kommon/authsession/AuthSessionHint;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun clear ()V
+	public fun read ()Lio/github/maniramezan/kommon/authsession/AuthSessionHint;
+	public fun record (Lio/github/maniramezan/kommon/authsession/AuthSessionHint;)V
+}
+
+public final class io/github/maniramezan/kommon/testing/RecordingAnalyticsClient : io/github/maniramezan/kommon/analytics/AnalyticsClient {
+	public fun <init> ()V
+	public fun flush ()V
+	public final fun getIdentifiedUserIds ()Ljava/util/List;
+	public final fun getIncrements ()Ljava/util/List;
+	public final fun getInitializedToken ()Ljava/lang/String;
+	public final fun getTrackedEventNames ()Ljava/util/List;
+	public final fun getTrackedEvents ()Ljava/util/List;
+	public final fun getTrackedScreens ()Ljava/util/List;
+	public final fun getUserProperties ()Ljava/util/LinkedHashMap;
+	public final fun getWasFlushed ()Z
+	public final fun getWasReset ()Z
+	public fun identify (Ljava/lang/String;)V
+	public fun increment (Ljava/lang/String;D)V
+	public fun initialize (Ljava/lang/String;Ljava/lang/String;)V
+	public fun reset ()V
+	public fun setUserProperties (Ljava/util/Map;)V
+	public fun track (Lio/github/maniramezan/kommon/analytics/AnalyticsEvent;)V
+	public fun trackScreen (Ljava/lang/String;Ljava/util/Map;)V
+}
+
+public final class io/github/maniramezan/kommon/testing/RecordingAnalyticsClient$Increment {
+	public fun <init> (Ljava/lang/String;D)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()D
+	public final fun copy (Ljava/lang/String;D)Lio/github/maniramezan/kommon/testing/RecordingAnalyticsClient$Increment;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/testing/RecordingAnalyticsClient$Increment;Ljava/lang/String;DILjava/lang/Object;)Lio/github/maniramezan/kommon/testing/RecordingAnalyticsClient$Increment;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getProperty ()Ljava/lang/String;
+	public final fun getValue ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/testing/RecordingAnalyticsClient$ScreenView {
+	public fun <init> (Ljava/lang/String;Ljava/util/Map;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/util/Map;)Lio/github/maniramezan/kommon/testing/RecordingAnalyticsClient$ScreenView;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/testing/RecordingAnalyticsClient$ScreenView;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lio/github/maniramezan/kommon/testing/RecordingAnalyticsClient$ScreenView;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getProperties ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/testing/RecordingLogger : io/github/maniramezan/kommon/foundation/KommonLogger {
+	public fun <init> ()V
+	public fun debug (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun entriesAt (Lio/github/maniramezan/kommon/testing/RecordingLogger$Level;)Ljava/util/List;
+	public fun error (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public final fun getEntries ()Ljava/util/List;
+	public fun info (Ljava/lang/String;Ljava/lang/String;)V
+	public fun warning (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public final class io/github/maniramezan/kommon/testing/RecordingLogger$Entry {
+	public fun <init> (Lio/github/maniramezan/kommon/testing/RecordingLogger$Level;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Lio/github/maniramezan/kommon/testing/RecordingLogger$Level;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/maniramezan/kommon/testing/RecordingLogger$Level;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/Throwable;
+	public final fun copy (Lio/github/maniramezan/kommon/testing/RecordingLogger$Level;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)Lio/github/maniramezan/kommon/testing/RecordingLogger$Entry;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/testing/RecordingLogger$Entry;Lio/github/maniramezan/kommon/testing/RecordingLogger$Level;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lio/github/maniramezan/kommon/testing/RecordingLogger$Entry;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Ljava/lang/Throwable;
+	public final fun getLevel ()Lio/github/maniramezan/kommon/testing/RecordingLogger$Level;
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getTag ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/testing/RecordingLogger$Level : java/lang/Enum {
+	public static final field DEBUG Lio/github/maniramezan/kommon/testing/RecordingLogger$Level;
+	public static final field ERROR Lio/github/maniramezan/kommon/testing/RecordingLogger$Level;
+	public static final field INFO Lio/github/maniramezan/kommon/testing/RecordingLogger$Level;
+	public static final field WARNING Lio/github/maniramezan/kommon/testing/RecordingLogger$Level;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/maniramezan/kommon/testing/RecordingLogger$Level;
+	public static fun values ()[Lio/github/maniramezan/kommon/testing/RecordingLogger$Level;
+}
+

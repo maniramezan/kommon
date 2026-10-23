@@ -1,0 +1,63 @@
+public final class io/github/maniramezan/kommon/telemetry/AnalyticsOpenTelemetryClient : io/github/maniramezan/kommon/telemetry/OpenTelemetryClient {
+	public fun <init> (Lio/github/maniramezan/kommon/analytics/AnalyticsClient;)V
+	public fun recordSpan (Lio/github/maniramezan/kommon/telemetry/OpenTelemetrySpan;)V
+}
+
+public final class io/github/maniramezan/kommon/telemetry/NoOpOpenTelemetryClient : io/github/maniramezan/kommon/telemetry/OpenTelemetryClient {
+	public fun <init> ()V
+	public fun recordSpan (Lio/github/maniramezan/kommon/telemetry/OpenTelemetrySpan;)V
+}
+
+public abstract interface class io/github/maniramezan/kommon/telemetry/OpenTelemetryClient {
+	public abstract fun recordSpan (Lio/github/maniramezan/kommon/telemetry/OpenTelemetrySpan;)V
+}
+
+public final class io/github/maniramezan/kommon/telemetry/OpenTelemetryClientKt {
+	public static final field ERROR_TYPE_ATTRIBUTE Ljava/lang/String;
+	public static final fun trace (Lio/github/maniramezan/kommon/telemetry/OpenTelemetryClient;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public static synthetic fun trace$default (Lio/github/maniramezan/kommon/telemetry/OpenTelemetryClient;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class io/github/maniramezan/kommon/telemetry/OpenTelemetrySpan {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()J
+	public final fun component5 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/util/Map;)Lio/github/maniramezan/kommon/telemetry/OpenTelemetrySpan;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/telemetry/OpenTelemetrySpan;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/util/Map;ILjava/lang/Object;)Lio/github/maniramezan/kommon/telemetry/OpenTelemetrySpan;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttributes ()Ljava/util/Map;
+	public final fun getDurationMs ()J
+	public final fun getKind ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getStatus ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/telemetry/SpanKind {
+	public static final field CLIENT Ljava/lang/String;
+	public static final field CONSUMER Ljava/lang/String;
+	public static final field INSTANCE Lio/github/maniramezan/kommon/telemetry/SpanKind;
+	public static final field INTERNAL Ljava/lang/String;
+	public static final field PRODUCER Ljava/lang/String;
+	public static final field SERVER Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/telemetry/SpanStatus {
+	public static final field ERROR Ljava/lang/String;
+	public static final field INSTANCE Lio/github/maniramezan/kommon/telemetry/SpanStatus;
+	public static final field OK Ljava/lang/String;
+	public static final field UNSET Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/telemetry/TraceRecording {
+	public static final field NANOS_PER_MILLI J
+	public fun <init> (Lio/github/maniramezan/kommon/telemetry/OpenTelemetryClient;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public final fun failed (Ljava/lang/Throwable;)V
+	public final fun finish ()V
+}
+

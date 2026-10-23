@@ -50,3 +50,6 @@ If you add a new Android API to main sources, add a minimal compile-only stub fo
   port without a matching fake in `:testing`, and module map/README drift.
 - Breaking public API changes are allowed pre-1.0 but must be called out in the commit/PR body
   (use `feat!:` / `BREAKING CHANGE:` so `release.yml` bumps the minor version).
+- Android modules' `check` includes `apiCheck` against `api/<module>.api`. For intentional
+  API changes, run `:<module>:apiDump` and review and commit the baseline diff with the code.
+  `:design-system` uses `:design-system:updateKotlinAbi` instead.

@@ -43,4 +43,6 @@ description: Checklist for adding a new Gradle module (artifact) to kommon — s
    - `AGENTS.md` → "Repository Map" entry with its dependencies.
    - `README.md` → module table row + a short usage snippet.
    - KDoc on every public declaration (`explicit-api = strict` forces visibility; KDoc is on you).
-8. **Verify** with the `kommon-verify` skill.
+8. **API baseline:** run `./gradlew :<module>:apiDump`, review the nonempty
+   `api/<module>.api` dump, and commit it. The convention's `check` includes `apiCheck`.
+9. **Verify** with the `kommon-verify` skill.
