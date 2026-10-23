@@ -17,6 +17,11 @@ exceptions:
     # failure from others (kotlin.Result-based error channels).
     active: false
 
+naming:
+  FunctionNaming:
+    # Composables are PascalCase by convention.
+    ignoreAnnotated: ['Composable']
+
 style:
   MagicNumber:
     ignorePropertyDeclaration: true

@@ -76,6 +76,10 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   `KMPComponents`. Uses the KMP Android plugin directly rather than `kommon.android.library`, so it
   is not covered by the JaCoCo gate; its public API is guarded by `checkKotlinAbi` against
   `design-system/api/` (run `./gradlew :design-system:updateKotlinAbi` for intended changes).
+- `:debug-ui` — Compose debug screens (`RemoteConfigDebugScreen`, `AnalyticsDebugScreen`) built with
+  Compose Material 3. Depends on `:remoteconfig-debug` and `:analytics-debug`. The only module allowed
+  to contain rendered UI; pure logic lives in `*Model.kt` files with plain JVM tests, composables
+  are tested with Robolectric Compose tests and excluded from the JaCoCo ratio.
 - `build-logic/` — Gradle convention plugin (`kommon.android.library`).
 - `config/detekt/detekt.yml` — shared detekt overrides.
 
@@ -93,11 +97,11 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   (default `NoOpLogger`) from `:foundation` rather than importing Timber/android.util.Log directly.
   `TimberLogger` is the one concrete bridge implementation, and it lives in `:foundation` precisely
   so consumers can opt in without forcing Timber on everyone else.
-- **No networking or rendered UI here**: HTTP transport belongs in `kenwork`
-  (`io.github.maniramezan.kenwork:*`). Platform-neutral design-system values and contracts live in
-  `:design-system`; Compose adapters and rendered components live in `KMPComponents`. Keep `kommon`
-  free of Compose types (`Color`, `Dp`, `TextStyle`, and composables) so Android, desktop, and iOS
-  consumers can interpret the same tokens without taking a UI dependency.
+- **No networking; rendered UI is opt-in**: HTTP transport belongs in `kenwork`.
+  Platform-neutral design tokens stay in `:design-system`; general-purpose rendered components
+  live in `KMPComponents`. Only `:debug-ui` may use Compose, to render kommon's debug stores.
+  It uses published Compose Material 3 artifacts and has no dependency on KMPComponents.
+  No other module depends on `:debug-ui`, so consumers opt into its UI dependencies explicitly.
 - The library is pre-1.0 (`0.1.0` and climbing); breaking API changes are still acceptable but
   should be called out explicitly, since Novalingo is the intended first consumer.
 
@@ -134,7 +138,7 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   that touch `android.*` APIs (e.g. `SharedPreferences`, `Patterns`). **Known limitation**: in this
   AGP9/Kotlin toolchain combination, JaCoco does not measure line coverage for classes only
   exercised via `RobolectricTestRunner` — they read as 0% covered even when their tests pass. The
-  known-affected classes (`TimberLogger`, `LocalOverrideStore`) are excluded
+  known-affected classes (`TimberLogger`, `LocalOverrideStore`, `:debug-ui` composables) are excluded
   from the coverage ratio in `build-logic/convention/.../Jacoco.kt`'s `COVERAGE_EXCLUSIONS`. Keep
   writing real Robolectric tests for these classes regardless — the exclusion is about the metric,
   not about skipping verification. If you add a new Android-framework-dependent class, write its
@@ -161,6 +165,9 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   post-CI auto-release setup used in sibling repos. `release.yml` requires four repo secrets to
   actually publish to Maven Central: `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`,
   `SIGNING_IN_MEMORY_KEY`, `SIGNING_IN_MEMORY_KEY_PASSWORD`.
+  Release tagging uses `RELEASE_PLEASE_APP_ID` and `RELEASE_PLEASE_APP_PRIVATE_KEY`; that GitHub
+  App installation must allow Contents write and Workflows write. Token creation checks those
+  permissions before publishing, so a missing workflow permission cannot strand a Maven release.
 - Remote: `https://github.com/maniramezan/kommon`.
 
 ## Library Code Conventions
