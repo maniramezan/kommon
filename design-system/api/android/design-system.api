@@ -1,0 +1,206 @@
+public final class io/github/maniramezan/kommon/designsystem/ColorContrastKt {
+	public static final field MIN_NON_TEXT_CONTRAST D
+	public static final field MIN_TEXT_CONTRAST D
+	public static final fun contrastRatio (Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;)D
+	public static final fun getAlpha (Lio/github/maniramezan/kommon/designsystem/ColorToken;)I
+	public static final fun getBlue (Lio/github/maniramezan/kommon/designsystem/ColorToken;)I
+	public static final fun getGreen (Lio/github/maniramezan/kommon/designsystem/ColorToken;)I
+	public static final fun getRed (Lio/github/maniramezan/kommon/designsystem/ColorToken;)I
+	public static final fun relativeLuminance (Lio/github/maniramezan/kommon/designsystem/ColorToken;)D
+}
+
+public final class io/github/maniramezan/kommon/designsystem/ColorSchemeTokens {
+	public fun <init> (Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;)V
+	public fun <init> (Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;)V
+	public synthetic fun <init> (Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component10 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component11 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component12 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component13 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component14 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component15 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component16 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component17 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component18 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component2 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component3 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component4 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component5 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component6 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component7 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component8 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun component9 ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun copy (Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;)Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;Lio/github/maniramezan/kommon/designsystem/ColorToken;ILjava/lang/Object;)Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getOnError ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getOnPrimary ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getOnSecondary ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getOnSuccess ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getOnSurface ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getOnSurfaceVariant ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getOnTertiary ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getOnWarning ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getOutline ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getOutlineVariant ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getPrimary ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getSecondary ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getSuccess ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getSurface ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getSurfaceVariant ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getTertiary ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun getWarning ()Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/designsystem/ColorToken {
+	public static final field Companion Lio/github/maniramezan/kommon/designsystem/ColorToken$Companion;
+	public fun <init> (J)V
+	public final fun component1 ()J
+	public final fun copy (J)Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/designsystem/ColorToken;JILjava/lang/Object;)Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArgb ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/designsystem/ColorToken$Companion {
+	public final fun argb (IIII)Lio/github/maniramezan/kommon/designsystem/ColorToken;
+	public final fun rgb (III)Lio/github/maniramezan/kommon/designsystem/ColorToken;
+}
+
+public final class io/github/maniramezan/kommon/designsystem/FontWeightToken : java/lang/Enum {
+	public static final field BOLD Lio/github/maniramezan/kommon/designsystem/FontWeightToken;
+	public static final field MEDIUM Lio/github/maniramezan/kommon/designsystem/FontWeightToken;
+	public static final field NORMAL Lio/github/maniramezan/kommon/designsystem/FontWeightToken;
+	public static final field SEMI_BOLD Lio/github/maniramezan/kommon/designsystem/FontWeightToken;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/maniramezan/kommon/designsystem/FontWeightToken;
+	public static fun values ()[Lio/github/maniramezan/kommon/designsystem/FontWeightToken;
+}
+
+public final class io/github/maniramezan/kommon/designsystem/KommonDesignTokens {
+	public static final field INSTANCE Lio/github/maniramezan/kommon/designsystem/KommonDesignTokens;
+	public final fun getDefault ()Lio/github/maniramezan/kommon/designsystem/ThemeTokens;
+}
+
+public final class io/github/maniramezan/kommon/designsystem/MotionTokens {
+	public fun <init> ()V
+	public fun <init> (III)V
+	public synthetic fun <init> (IIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun copy (III)Lio/github/maniramezan/kommon/designsystem/MotionTokens;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/designsystem/MotionTokens;IIIILjava/lang/Object;)Lio/github/maniramezan/kommon/designsystem/MotionTokens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDeliberateMilliseconds ()I
+	public final fun getFastMilliseconds ()I
+	public final fun getStandardMilliseconds ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/designsystem/ShapeTokens {
+	public fun <init> ()V
+	public fun <init> (FFF)V
+	public synthetic fun <init> (FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (FFF)Lio/github/maniramezan/kommon/designsystem/ShapeTokens;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/designsystem/ShapeTokens;FFFILjava/lang/Object;)Lio/github/maniramezan/kommon/designsystem/ShapeTokens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLargeRadius ()F
+	public final fun getMediumRadius ()F
+	public final fun getSmallRadius ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/designsystem/SpacingTokens {
+	public fun <init> ()V
+	public fun <init> (FFFFFF)V
+	public synthetic fun <init> (FFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun copy (FFFFFF)Lio/github/maniramezan/kommon/designsystem/SpacingTokens;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/designsystem/SpacingTokens;FFFFFFILjava/lang/Object;)Lio/github/maniramezan/kommon/designsystem/SpacingTokens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getExtraLarge ()F
+	public final fun getExtraSmall ()F
+	public final fun getLarge ()F
+	public final fun getMedium ()F
+	public final fun getNone ()F
+	public final fun getSmall ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/designsystem/ThemeTokens {
+	public fun <init> (Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;Lio/github/maniramezan/kommon/designsystem/SpacingTokens;Lio/github/maniramezan/kommon/designsystem/ShapeTokens;Lio/github/maniramezan/kommon/designsystem/TypographyTokens;Lio/github/maniramezan/kommon/designsystem/MotionTokens;)V
+	public synthetic fun <init> (Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;Lio/github/maniramezan/kommon/designsystem/SpacingTokens;Lio/github/maniramezan/kommon/designsystem/ShapeTokens;Lio/github/maniramezan/kommon/designsystem/TypographyTokens;Lio/github/maniramezan/kommon/designsystem/MotionTokens;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;
+	public final fun component2 ()Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;
+	public final fun component3 ()Lio/github/maniramezan/kommon/designsystem/SpacingTokens;
+	public final fun component4 ()Lio/github/maniramezan/kommon/designsystem/ShapeTokens;
+	public final fun component5 ()Lio/github/maniramezan/kommon/designsystem/TypographyTokens;
+	public final fun component6 ()Lio/github/maniramezan/kommon/designsystem/MotionTokens;
+	public final fun copy (Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;Lio/github/maniramezan/kommon/designsystem/SpacingTokens;Lio/github/maniramezan/kommon/designsystem/ShapeTokens;Lio/github/maniramezan/kommon/designsystem/TypographyTokens;Lio/github/maniramezan/kommon/designsystem/MotionTokens;)Lio/github/maniramezan/kommon/designsystem/ThemeTokens;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/designsystem/ThemeTokens;Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;Lio/github/maniramezan/kommon/designsystem/SpacingTokens;Lio/github/maniramezan/kommon/designsystem/ShapeTokens;Lio/github/maniramezan/kommon/designsystem/TypographyTokens;Lio/github/maniramezan/kommon/designsystem/MotionTokens;ILjava/lang/Object;)Lio/github/maniramezan/kommon/designsystem/ThemeTokens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDarkColors ()Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;
+	public final fun getLightColors ()Lio/github/maniramezan/kommon/designsystem/ColorSchemeTokens;
+	public final fun getMotion ()Lio/github/maniramezan/kommon/designsystem/MotionTokens;
+	public final fun getShapes ()Lio/github/maniramezan/kommon/designsystem/ShapeTokens;
+	public final fun getSpacing ()Lio/github/maniramezan/kommon/designsystem/SpacingTokens;
+	public final fun getTypography ()Lio/github/maniramezan/kommon/designsystem/TypographyTokens;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/designsystem/TypeStyleToken {
+	public fun <init> (FFLio/github/maniramezan/kommon/designsystem/FontWeightToken;)V
+	public synthetic fun <init> (FFLio/github/maniramezan/kommon/designsystem/FontWeightToken;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()Lio/github/maniramezan/kommon/designsystem/FontWeightToken;
+	public final fun copy (FFLio/github/maniramezan/kommon/designsystem/FontWeightToken;)Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;FFLio/github/maniramezan/kommon/designsystem/FontWeightToken;ILjava/lang/Object;)Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFontSize ()F
+	public final fun getLineHeight ()F
+	public final fun getWeight ()Lio/github/maniramezan/kommon/designsystem/FontWeightToken;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/designsystem/TypographyTokens {
+	public fun <init> ()V
+	public fun <init> (Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;)V
+	public synthetic fun <init> (Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;
+	public final fun component2 ()Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;
+	public final fun component3 ()Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;
+	public final fun component4 ()Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;
+	public final fun component5 ()Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;
+	public final fun copy (Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;)Lio/github/maniramezan/kommon/designsystem/TypographyTokens;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/designsystem/TypographyTokens;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;ILjava/lang/Object;)Lio/github/maniramezan/kommon/designsystem/TypographyTokens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBody ()Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;
+	public final fun getCode ()Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;
+	public final fun getDisplay ()Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;
+	public final fun getLabel ()Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;
+	public final fun getTitle ()Lio/github/maniramezan/kommon/designsystem/TypeStyleToken;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

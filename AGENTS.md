@@ -69,10 +69,13 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   `InMemoryAuthSessionStore`). Depends on `:foundation`, `:sync`, `:authsession`,
   `:analytics-core`, `:remoteconfig` as `api` so consumers get them transitively on their test
   classpath. When you add a port to a module, add a matching fake here.
-- `:design-system` — Kotlin Multiplatform (Android, JVM, iOS) platform-neutral design tokens
-  (`ColorToken`, spacing/shape/typography/motion tokens, `ThemeTokens`, `KommonDesignTokens`). No
-  Compose types; renderers live in `KMPComponents`. Uses the KMP Android plugin directly rather
-  than `kommon.android.library`, so it is not covered by the JaCoCo gate.
+- `:design-system` — Kotlin Multiplatform (Android, JVM, iOS, Wasm) platform-neutral design tokens
+  (`ColorToken`, spacing/shape/typography/motion tokens, `ThemeTokens`, `KommonDesignTokens`) and
+  WCAG helpers (`relativeLuminance`, `contrastRatio`). `ColorSchemeTokens` has nine required roles
+  plus optional ones (`null` = renderer derives it). No Compose types; renderers live in
+  `KMPComponents`. Uses the KMP Android plugin directly rather than `kommon.android.library`, so it
+  is not covered by the JaCoCo gate; its public API is guarded by `checkKotlinAbi` against
+  `design-system/api/` (run `./gradlew :design-system:updateKotlinAbi` for intended changes).
 - `build-logic/` — Gradle convention plugin (`kommon.android.library`).
 - `config/detekt/detekt.yml` — shared detekt overrides.
 

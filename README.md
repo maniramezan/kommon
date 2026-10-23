@@ -7,7 +7,7 @@ authentication, analytics, remote-config, and telemetry SDKs.
 ## Requirements
 
 - Android library consumers using JDK 17 or newer.
-- Kotlin 2.4.x and Android Gradle Plugin 9.2.x are used to build this release.
+- Kotlin 2.4.x and Android Gradle Plugin 9.4.x are used to build this release.
 
 ## Modules
 
@@ -20,7 +20,7 @@ authentication, analytics, remote-config, and telemetry SDKs.
 | `crashreporting` / `telemetry` | Crash-reporting port; OpenTelemetry-shaped spans with a `trace {}` helper. |
 | `remoteconfig` / `remoteconfig-debug` | Typed, validated config keys, a shared resolver, and debug-only local overrides. |
 | `parsing` | Localized-value and JSON string-array parsers. |
-| `design-system` | Kotlin Multiplatform design tokens (colors, spacing, shapes, typography, motion). |
+| `design-system` | Kotlin Multiplatform design tokens (colors, spacing, shapes, typography, motion) and WCAG contrast helpers. |
 | `testing` | Consumer test fakes for sync, auth, analytics, logging, and remote config. |
 
 ## Installation
@@ -55,7 +55,13 @@ the storage layer permits it. Keep tombstones until the server acknowledges dele
 policy belongs to the consuming app. The engine serializes calls made through one instance, and
 cancelling the calling coroutine cancels the pass (it is never reported as a sync failure). A
 server that answers `hasMore = true` without advancing its cursor fails the pass instead of
-looping forever.
+looping forever. A paginated full snapshot only persists its cursor after the last page is
+applied, so an interrupted snapshot restarts rather than resuming without reconciliation.
+Override `upsertAll` to write each page of changes in one database transaction. Repeated changes
+for a key are merged in response order before the final row is written. The engine reads rows
+before invoking `upsertAll`; a transaction around that batch alone cannot prevent concurrent local
+edits from being overwritten. Adapters must enforce conditional writes against the current local
+version when local editing can race sync persistence.
 
 ### Foundation
 
