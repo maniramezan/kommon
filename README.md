@@ -58,7 +58,10 @@ server that answers `hasMore = true` without advancing its cursor fails the pass
 looping forever. A paginated full snapshot only persists its cursor after the last page is
 applied, so an interrupted snapshot restarts rather than resuming without reconciliation.
 Override `upsertAll` to write each page of changes in one database transaction. Repeated changes
-for a key are merged in response order before the final row is written.
+for a key are merged in response order before the final row is written. The engine reads rows
+before invoking `upsertAll`; a transaction around that batch alone cannot prevent concurrent local
+edits from being overwritten. Adapters must enforce conditional writes against the current local
+version when local editing can race sync persistence.
 
 ### Foundation
 
