@@ -29,6 +29,15 @@ public interface SyncResourceAdapter<E : SyncableEntity<E>, U, D, C> {
 
     public suspend fun upsert(entity: E)
 
+    /**
+     * Writes a batch of rows produced from one ack set, one page of server changes, or one
+     * tombstone sweep. The default calls [upsert] per row; override it to write the batch in a
+     * single database transaction.
+     */
+    public suspend fun upsertAll(entities: List<E>) {
+        entities.forEach { upsert(it) }
+    }
+
     public suspend fun findExisting(change: C): E?
 
     public fun changeKey(change: C): String

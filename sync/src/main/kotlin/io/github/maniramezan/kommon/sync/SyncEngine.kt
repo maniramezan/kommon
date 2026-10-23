@@ -76,9 +76,14 @@ public class SyncEngine(
             val appliedCount = pushResponse.applied.size
 
             var response = if (pushResponse.fullResyncRequired) fullResync(adapter, limit) else pushResponse
+            // A snapshot is only complete when it starts on this pass's first page; reconciling a
+            // snapshot resumed mid-way would tombstone every row served by the pages already seen.
+            val fullSnapshot = response.mode == SyncResponse.MODE_FULL
             val activeKeys = mutableSetOf<String>()
-            var fullMode = ingestChanges(adapter, response, activeKeys)
-            storeMetadata(adapter.resourceName, response)
+            ingestChanges(adapter, response, activeKeys)
+            // Snapshot cursors are persisted only once the whole snapshot has been applied, so a
+            // failure mid-drain restarts the snapshot instead of resuming it without reconciliation.
+            if (!fullSnapshot) storeMetadata(adapter.resourceName, response)
             var changeCount = response.serverChanges.size
 
             val requestedCursors = mutableSetOf<String>()
@@ -92,11 +97,14 @@ public class SyncEngine(
                 check(!response.hasMore || response.cursor !in requestedCursors) {
                     "Sync '${adapter.resourceName}': cursor did not advance past '$since'"
                 }
-                fullMode = ingestChanges(adapter, response, activeKeys) || fullMode
-                storeMetadata(adapter.resourceName, response)
+                ingestChanges(adapter, response, activeKeys)
+                if (!fullSnapshot) storeMetadata(adapter.resourceName, response)
                 changeCount += response.serverChanges.size
             }
-            if (fullMode) reconcileFullSnapshot(adapter, activeKeys)
+            if (fullSnapshot) {
+                reconcileFullSnapshot(adapter, activeKeys)
+                storeMetadata(adapter.resourceName, response)
+            }
 
             reportTelemetry {
                 telemetry.onSyncCompleted(
@@ -147,45 +155,49 @@ public class SyncEngine(
         applied: List<SyncAppliedRecord>,
         pendingByKey: Map<String, E>,
     ) {
-        applied.forEach { ack ->
-            val snapshot = pendingByKey[ack.key] ?: return@forEach
-            // Ack guard: if the row was edited mid-flight, leave it pending to re-push.
-            val current = adapter.reload(snapshot) ?: return@forEach
-            if (current.localUpdatedAt != snapshot.localUpdatedAt) return@forEach
-            adapter.upsert(current.applyOutcome(ack))
-            if (ack.status == SyncAppliedRecord.STATUS_BLOCKED || ack.status == SyncAppliedRecord.STATUS_REJECTED) {
-                reportTelemetry { telemetry.onItemBlocked(adapter.resourceName, ack.status, ack.reason) }
+        val acknowledged =
+            applied.mapNotNull { ack ->
+                val snapshot = pendingByKey[ack.key] ?: return@mapNotNull null
+                // Ack guard: if the row was edited mid-flight, leave it pending to re-push.
+                val current = adapter.reload(snapshot) ?: return@mapNotNull null
+                if (current.localUpdatedAt != snapshot.localUpdatedAt) return@mapNotNull null
+                if (ack.status == SyncAppliedRecord.STATUS_BLOCKED || ack.status == SyncAppliedRecord.STATUS_REJECTED) {
+                    reportTelemetry { telemetry.onItemBlocked(adapter.resourceName, ack.status, ack.reason) }
+                }
+                current.applyOutcome(ack)
             }
-        }
+        if (acknowledged.isNotEmpty()) adapter.upsertAll(acknowledged)
     }
 
-    /** Applies one page's `serverChanges`; returns whether the page was a full snapshot. */
+    /** Applies one page's `serverChanges` in a single [SyncResourceAdapter.upsertAll] batch. */
     private suspend fun <E : SyncableEntity<E>, U, D, C> ingestChanges(
         adapter: SyncResourceAdapter<E, U, D, C>,
         response: SyncResponse<C>,
         activeKeys: MutableSet<String>,
-    ): Boolean {
-        response.serverChanges.forEach { change ->
-            if (!adapter.isChangeDeleted(change)) activeKeys += adapter.changeKey(change)
-            val existing = adapter.findExisting(change)
-            // Pending guard: never clobber a row that still has un-pushed local changes.
-            if (existing != null && existing.syncState != SyncState.SYNCED) return@forEach
-            adapter.upsert(adapter.toEntity(change, existing))
-        }
-        return response.mode == SyncResponse.MODE_FULL
+    ) {
+        val incoming =
+            response.serverChanges.mapNotNull { change ->
+                if (!adapter.isChangeDeleted(change)) activeKeys += adapter.changeKey(change)
+                val existing = adapter.findExisting(change)
+                // Pending guard: never clobber a row that still has un-pushed local changes.
+                if (existing != null && existing.syncState != SyncState.SYNCED) return@mapNotNull null
+                adapter.toEntity(change, existing)
+            }
+        if (incoming.isNotEmpty()) adapter.upsertAll(incoming)
     }
 
     private suspend fun <E : SyncableEntity<E>, U, D, C> reconcileFullSnapshot(
         adapter: SyncResourceAdapter<E, U, D, C>,
         activeKeys: Set<String>,
     ) {
-        adapter.activeRows().forEach { entity ->
-            // Tombstone guard: only clean rows absent from the snapshot; never delete
-            // rows with un-pushed local changes.
-            if (entity.syncState == SyncState.SYNCED && adapter.syncKey(entity) !in activeKeys) {
-                adapter.upsert(entity.tombstone())
-            }
-        }
+        // Tombstone guard: only clean rows absent from the snapshot; never delete
+        // rows with un-pushed local changes.
+        val tombstones =
+            adapter
+                .activeRows()
+                .filter { it.syncState == SyncState.SYNCED && adapter.syncKey(it) !in activeKeys }
+                .map { it.tombstone() }
+        if (tombstones.isNotEmpty()) adapter.upsertAll(tombstones)
     }
 
     private suspend fun cursorOf(adapter: SyncResourceAdapter<*, *, *, *>): String? = cursorStore.get(adapter.resourceName)?.cursor
@@ -237,7 +249,8 @@ private fun <E : SyncableEntity<E>> E.applyOutcome(ack: SyncAppliedRecord): E {
             withSync(serverId, updatedAt, isDeleted, SyncState.BLOCKED)
         SyncAppliedRecord.STATUS_DELETED ->
             withSync(id, updated, isDeleted = true, syncState = SyncState.SYNCED)
+        // Any other status confirms the push as sent, so a pending delete stays deleted.
         else ->
-            withSync(id, updated, isDeleted = false, syncState = SyncState.SYNCED)
+            withSync(id, updated, isDeleted = isDeleted, syncState = SyncState.SYNCED)
     }
 }
