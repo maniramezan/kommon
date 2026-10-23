@@ -20,7 +20,8 @@ authentication, analytics, remote-config, and telemetry SDKs.
 | `crashreporting` / `telemetry` | Crash-reporting port; OpenTelemetry-shaped spans with a `trace {}` helper. |
 | `remoteconfig` / `remoteconfig-debug` | Typed, validated config keys, a shared resolver, and debug-only local overrides. |
 | `parsing` | Localized-value and JSON string-array parsers. |
-| `design-system` | Kotlin Multiplatform design tokens (colors, spacing, shapes, typography, motion). |
+| `design-system` | Kotlin Multiplatform design tokens (colors, spacing, shapes, typography, motion) and WCAG contrast helpers. |
+| `debug-ui` | Compose debug screens for remote-config overrides and captured analytics, built on [KMPComponents](https://github.com/ArjangConsulting/KMPComponents). |
 | `testing` | Consumer test fakes for sync, auth, analytics, logging, and remote config. |
 
 ## Installation
@@ -55,7 +56,9 @@ the storage layer permits it. Keep tombstones until the server acknowledges dele
 policy belongs to the consuming app. The engine serializes calls made through one instance, and
 cancelling the calling coroutine cancels the pass (it is never reported as a sync failure). A
 server that answers `hasMore = true` without advancing its cursor fails the pass instead of
-looping forever.
+looping forever. A paginated full snapshot only persists its cursor after the last page is
+applied, so an interrupted snapshot restarts rather than resuming without reconciliation.
+Override `upsertAll` to write each page of changes in one database transaction.
 
 ### Foundation
 
@@ -130,6 +133,23 @@ class FirebaseConfigClient(
 `ConfigKey` validates itself at construction (the default must match the declared type and any
 `allowedValues`), so a mistyped key fails at app start rather than at the call site.
 
+### Debug screens
+
+`debug-ui` renders the debug modules with KMPComponents. Wrap the screens in `KmpTheme` and keep
+them behind a debug-only entry point:
+
+```kotlin
+KmpTheme {
+    RemoteConfigDebugScreen(client = configClient, overrideStore = localOverrideStore)
+}
+KmpTheme {
+    AnalyticsDebugScreen(store = analyticsDebugStore)
+}
+```
+
+Both screens also have stateless overloads that take the entries and callbacks directly, and every
+string is a parameter (`RemoteConfigDebugLabels`, `AnalyticsDebugLabels`) for localization.
+
 ### Parsing
 
 ```kotlin
@@ -169,6 +189,7 @@ site.
 ```bash
 ./gradlew check
 ./gradlew dokkaGenerate
+./gradlew check -PuseLocalKmpComponents=true   # build debug-ui against a sibling KMPComponents checkout
 ```
 
 Contributor and AI-agent guidance lives in [`AGENTS.md`](AGENTS.md); repo-specific workflows
