@@ -1,6 +1,7 @@
 package io.github.maniramezan.kommon.analytics.debug
 
 import io.github.maniramezan.kommon.analytics.AnalyticsEvent
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
@@ -98,5 +99,21 @@ class AnalyticsCaptureClientTest {
                 ),
                 actions,
             )
+        }
+
+    @Test
+    fun `a failing debug store never stops the call reaching the delegate`() =
+        runTest {
+            val delegate = mockk<io.github.maniramezan.kommon.analytics.AnalyticsClient>(relaxed = true)
+            val brokenStore = mockk<AnalyticsDebugStore>()
+            every { brokenStore.append(any()) } throws IllegalStateException("store closed")
+            val client = AnalyticsCaptureClient(delegate, brokenStore)
+            val event = AnalyticsEvent("purchase")
+
+            client.track(event)
+            client.trackScreen("home")
+
+            verify { delegate.track(event) }
+            verify { delegate.trackScreen("home", emptyMap()) }
         }
 }
