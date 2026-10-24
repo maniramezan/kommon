@@ -2,8 +2,14 @@ package io.github.maniramezan.kommon.speech
 
 /** An update from a speech recognition run. */
 public sealed interface SpeechRecognitionEvent {
-    /** The recognizer is listening and the speaker can start talking. */
-    public data object Ready : SpeechRecognitionEvent
+    /**
+     * The recognizer is listening and the speaker can start talking.
+     *
+     * @property recognizer Which recognizer this run actually uses.
+     */
+    public data class Ready(
+        val recognizer: RecognizerKind,
+    ) : SpeechRecognitionEvent
 
     /**
      * The current input loudness.

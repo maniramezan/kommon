@@ -39,15 +39,15 @@ internal class SpeechRecognitionRunner(
             }
             val backend = runCatching { backendFactory.create(configuration) }.getOrNull()
             if (backend == null) {
-                logger.error(TAG, "no recognizer available")
-                close(SpeechRecognitionException(SpeechRecognitionException.Reason.NotAvailable, "Speech recognition is unavailable"))
+                logger.error(TAG, "no recognizer available requiresOnDevice=${configuration.requiresOnDevice}")
+                close(RecognizerSelection.unavailable(configuration.requiresOnDevice))
                 awaitClose()
                 return@callbackFlow
             }
             active = backend
-            logger.info(TAG, "start locale=${configuration.locale.toLanguageTag()} onDevice=${backend.usesOnDeviceRecognizer}")
-            val bridge = RecognitionEventBridge(configuration, sdkInt, ChannelSink(this), logger)
-            val extras = RecognizerIntentExtras.from(configuration, sdkInt, backend.usesOnDeviceRecognizer)
+            logger.info(TAG, "start locale=${configuration.locale.toLanguageTag()} recognizer=${backend.kind}")
+            val bridge = RecognitionEventBridge(configuration, backend.kind, sdkInt, ChannelSink(this), logger)
+            val extras = RecognizerIntentExtras.from(configuration, sdkInt, backend.kind)
             runCatching { backend.start(bridge, extras) }.onFailure {
                 logger.error(TAG, "start failed", it)
                 close(SpeechRecognitionException(SpeechRecognitionException.Reason.Other, "Could not start listening", it))

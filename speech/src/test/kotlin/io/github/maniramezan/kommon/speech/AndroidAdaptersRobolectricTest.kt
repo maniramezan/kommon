@@ -2,8 +2,11 @@ package io.github.maniramezan.kommon.speech
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
+import android.content.pm.ResolveInfo
 import android.os.Looper
 import android.speech.RecognitionListener
+import android.speech.RecognitionService
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.test.core.app.ApplicationProvider
@@ -21,7 +24,9 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowSpeechRecognizer
 import java.util.Locale
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
@@ -32,7 +37,7 @@ class AndroidAdaptersRobolectricTest {
     @Test
     fun `backend attaches the listener and builds the recognizer intent from the extras`() {
         val recognizer = SpeechRecognizer.createSpeechRecognizer(context)
-        val backend = AndroidRecognizerBackend(recognizer, usesOnDeviceRecognizer = false)
+        val backend = AndroidRecognizerBackend(recognizer, RecognizerKind.DefaultService)
         val listener = CountingListener()
 
         backend.start(
@@ -69,13 +74,65 @@ class AndroidAdaptersRobolectricTest {
                     val active = shadowOf(ShadowSpeechRecognizer.getLatestSpeechRecognizer())
                     shadowOf(Looper.getMainLooper()).idle()
                     active.triggerOnReadyForSpeech(android.os.Bundle())
-                    assertEquals(SpeechRecognitionEvent.Ready, awaitItem())
+                    assertEquals(SpeechRecognitionEvent.Ready(RecognizerKind.OnDevice), awaitItem())
                     cancelAndIgnoreRemainingEvents()
                 }
             } finally {
                 Dispatchers.resetMain()
             }
         }
+
+    @Test
+    fun `requiring on-device without an on-device recognizer never creates the default recognizer`() {
+        ShadowSpeechRecognizer.reset()
+        ShadowSpeechRecognizer.setIsOnDeviceRecognitionAvailable(false)
+        shadowOf(context.packageManager).addResolveInfoForIntent(
+            Intent(RecognitionService.SERVICE_INTERFACE),
+            ResolveInfo(),
+        )
+
+        val factory = AndroidRecognizerBackendFactory(context)
+
+        assertNull(factory.create(SpeechRecognitionConfiguration(Locale.US)))
+        assertNull(ShadowSpeechRecognizer.getLatestSpeechRecognizer())
+        assertFalse(isOnDeviceRecognitionAvailable(context))
+    }
+
+    @Test
+    fun `not requiring on-device falls back to the default recognizer`() {
+        ShadowSpeechRecognizer.reset()
+        ShadowSpeechRecognizer.setIsOnDeviceRecognitionAvailable(false)
+        shadowOf(context.packageManager).addResolveInfoForIntent(
+            Intent(RecognitionService.SERVICE_INTERFACE),
+            ResolveInfo(),
+        )
+
+        val backend = AndroidRecognizerBackendFactory(context).create(SpeechRecognitionConfiguration(Locale.US, requiresOnDevice = false))
+
+        assertEquals(RecognizerKind.DefaultService, backend?.kind)
+        assertNotNull(ShadowSpeechRecognizer.getLatestSpeechRecognizer())
+    }
+
+    @Test
+    fun `an available on-device recognizer is used for both settings`() {
+        ShadowSpeechRecognizer.reset()
+        ShadowSpeechRecognizer.setIsOnDeviceRecognitionAvailable(true)
+
+        assertTrue(isOnDeviceRecognitionAvailable(context))
+        val factory = AndroidRecognizerBackendFactory(context)
+        assertEquals(RecognizerKind.OnDevice, factory.create(SpeechRecognitionConfiguration(Locale.US))?.kind)
+        assertEquals(
+            RecognizerKind.OnDevice,
+            factory.create(SpeechRecognitionConfiguration(Locale.US, requiresOnDevice = false))?.kind,
+        )
+    }
+
+    @Test
+    @Config(sdk = [30])
+    fun `on-device recognition is unavailable below Android 12`() {
+        ShadowSpeechRecognizer.setIsOnDeviceRecognitionAvailable(true)
+        assertFalse(isOnDeviceRecognitionAvailable(context))
+    }
 
     @Test
     fun `public sessions construct without touching the engines`() {

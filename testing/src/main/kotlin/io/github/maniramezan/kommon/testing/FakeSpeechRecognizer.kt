@@ -11,15 +11,21 @@ import kotlinx.coroutines.flow.flow
  * Scripted [SpeechRecognizing] for consumer tests.
  *
  * Each collected run emits [script] in order, then throws [error] if set, otherwise completes.
- * Runs and [stop] calls are recorded.
+ * Runs and [stop] calls are recorded. Like the real session, a run that
+ * [requiresOnDevice][SpeechRecognitionConfiguration.requiresOnDevice] fails immediately with
+ * [SpeechRecognitionException.Reason.NotAvailable] while [isOnDeviceAvailable] is false.
  *
- * @property script The events every run emits.
+ * @property script The events every run emits (include `Ready(RecognizerKind...)` to simulate the
+ *   recognizer-in-use report).
  * @property error An exception thrown after the script, or `null` to complete normally.
  */
 public class FakeSpeechRecognizer(
     public var script: List<SpeechRecognitionEvent> = emptyList(),
     public var error: SpeechRecognitionException? = null,
 ) : SpeechRecognizing {
+    /** Whether the simulated device has an on-device recognizer. */
+    public var isOnDeviceAvailable: Boolean = true
+
     /** The configuration of every run started, in order. */
     public val configurations: MutableList<SpeechRecognitionConfiguration> = mutableListOf()
 
@@ -30,6 +36,12 @@ public class FakeSpeechRecognizer(
     override fun recognize(configuration: SpeechRecognitionConfiguration): Flow<SpeechRecognitionEvent> =
         flow {
             configurations += configuration
+            if (configuration.requiresOnDevice && !isOnDeviceAvailable) {
+                throw SpeechRecognitionException(
+                    SpeechRecognitionException.Reason.NotAvailable,
+                    "On-device recognition is not available",
+                )
+            }
             script.forEach { emit(it) }
             error?.let { throw it }
         }

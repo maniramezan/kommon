@@ -1,5 +1,6 @@
 package io.github.maniramezan.kommon.speech
 
+import android.annotation.SuppressLint
 import android.speech.RecognizerIntent
 
 /** Computes the `RecognizerIntent` extras for a [SpeechRecognitionConfiguration]. */
@@ -10,22 +11,25 @@ internal object RecognizerIntentExtras {
     /**
      * The extras to put on the recognizer intent.
      *
+     * The Android 14 extras are only added when [sdkInt] is at least [WORD_DETAILS_API_LEVEL].
+     *
      * @param configuration The run's settings.
      * @param sdkInt The device API level, used to gate Android 14 extras.
-     * @param usesOnDeviceRecognizer Whether a dedicated on-device recognizer is used; if not and
-     *   [SpeechRecognitionConfiguration.preferOnDevice] is set, offline recognition is requested.
+     * @param kind The recognizer in use; offline recognition is requested when it is the default
+     *   service, which is only used if [SpeechRecognitionConfiguration.requiresOnDevice] is false.
      */
+    @SuppressLint("InlinedApi")
     fun from(
         configuration: SpeechRecognitionConfiguration,
         sdkInt: Int,
-        usesOnDeviceRecognizer: Boolean,
+        kind: RecognizerKind,
     ): Map<String, Any> {
         val extras = linkedMapOf<String, Any>()
         extras[RecognizerIntent.EXTRA_LANGUAGE_MODEL] = RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
         extras[RecognizerIntent.EXTRA_LANGUAGE] = configuration.locale.toLanguageTag()
         extras[RecognizerIntent.EXTRA_PARTIAL_RESULTS] = true
         extras[RecognizerIntent.EXTRA_MAX_RESULTS] = if (configuration.reportsAlternatives) configuration.maxAlternatives else 1
-        if (configuration.preferOnDevice && !usesOnDeviceRecognizer) {
+        if (kind == RecognizerKind.DefaultService) {
             extras[RecognizerIntent.EXTRA_PREFER_OFFLINE] = true
         }
         configuration.completeSilenceMillis?.let {

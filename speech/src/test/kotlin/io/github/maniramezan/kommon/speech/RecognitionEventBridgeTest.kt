@@ -73,7 +73,7 @@ class RecognitionEventBridgeTest {
     private fun bridge(
         sdkInt: Int = 34,
         config: SpeechRecognitionConfiguration = configuration,
-    ) = RecognitionEventBridge(config, sdkInt, sink, logger)
+    ) = RecognitionEventBridge(config, RecognizerKind.OnDevice, sdkInt, sink, logger)
 
     private fun resultBundle(
         results: List<String>?,
@@ -118,12 +118,18 @@ class RecognitionEventBridgeTest {
         bridge.onEndOfSpeech()
         assertEquals(
             listOf(
-                SpeechRecognitionEvent.Ready,
+                SpeechRecognitionEvent.Ready(RecognizerKind.OnDevice),
                 SpeechRecognitionEvent.AudioLevel(0.5f),
                 SpeechRecognitionEvent.SilenceDetected,
             ),
             sink.events,
         )
+    }
+
+    @Test
+    fun `ready carries the kind of recognizer in use`() {
+        RecognitionEventBridge(configuration, RecognizerKind.DefaultService, 34, sink, logger).onReadyForSpeech(null)
+        assertEquals(listOf<SpeechRecognitionEvent>(SpeechRecognitionEvent.Ready(RecognizerKind.DefaultService)), sink.events)
     }
 
     @Test
@@ -180,7 +186,7 @@ class RecognitionEventBridgeTest {
         assertEquals(listOf(RecognizedWord("hello", 0.7f)), old)
 
         val noDetails = RecordingSink()
-        RecognitionEventBridge(configuration.copy(requestsWordDetails = false), 34, noDetails, logger)
+        RecognitionEventBridge(configuration.copy(requestsWordDetails = false), RecognizerKind.OnDevice, 34, noDetails, logger)
             .onResults(resultBundle(listOf("hello"), floatArrayOf(0.7f), parts))
         val words = (noDetails.events.last() as SpeechRecognitionEvent.Transcript).transcript.words
         assertEquals(listOf(RecognizedWord("hello", 0.7f)), words)
