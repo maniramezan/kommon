@@ -27,6 +27,9 @@ work:
 - `gradle-build-performance` for slow Gradle builds, CI time, or dependency graph cost.
 - `kotlin-backend-jpa-entity-mapping` if a future module touches JPA/Room entity design.
 - `kotlin-tooling-java-to-kotlin` if porting more Java-era Novalingo code into this repo.
+- `kmp-library-conventions` (from the KMPComponents repo's `skills/`) for public API shape, ABI
+  baselines, version-compatibility and target changes (notably `:design-system`), and release rules
+  shared with KMPComponents and kmp-code-editor. This file keeps kommon's own values.
 
 When adding or updating dependencies, check the latest stable version online first when network
 access is available, then pin the verified version in `gradle/libs.versions.toml`.
