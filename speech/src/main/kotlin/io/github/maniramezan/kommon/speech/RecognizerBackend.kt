@@ -7,8 +7,8 @@ import android.speech.RecognitionListener
  * without the Android framework. The production implementation is [AndroidRecognizerBackend].
  */
 internal interface RecognizerBackend {
-    /** Whether this is a dedicated on-device recognizer rather than the system default. */
-    val usesOnDeviceRecognizer: Boolean
+    /** Which kind of recognizer this backend wraps. */
+    val kind: RecognizerKind
 
     /** Attaches [listener] and starts listening with the given `RecognizerIntent` [extras]. */
     fun start(
@@ -25,6 +25,10 @@ internal interface RecognizerBackend {
 
 /** Creates [RecognizerBackend]s. */
 internal fun interface RecognizerBackendFactory {
-    /** A backend for [configuration], or `null` when no recognition service is available. */
+    /**
+     * A backend for [configuration], or `null` when none is allowed or available. When
+     * [SpeechRecognitionConfiguration.requiresOnDevice] is set, an implementation must never create
+     * the system default recognizer.
+     */
     fun create(configuration: SpeechRecognitionConfiguration): RecognizerBackend?
 }

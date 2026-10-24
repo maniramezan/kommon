@@ -71,7 +71,11 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   distance, port of the Swift `SwiftCommonsSpeech` semantics). Android-framework calls sit behind
   thin internal backends (`RecognizerBackend`, `TtsBackend`, `ModelBackend`) so the run logic
   (`SpeechRecognitionRunner`, `SpeechSynthesisRunner`) and result mapping are plain JVM tests.
-  Depends on `:foundation` only.
+  Depends on `:foundation` only. **Local-only by default**: `SpeechRecognitionConfiguration.requiresOnDevice`
+  (true) never creates the default `createSpeechRecognizer`, and `SpeechSynthesisRequest.allowsNetworkVoices`
+  (false) filters network voices and disables network synthesis; `Ready(recognizer)` reports the
+  `RecognizerKind` used and `isOnDeviceRecognitionAvailable(context)` lets apps check up front. Keep
+  that default when changing the module.
 - `:testing` — fakes for consumer unit tests (`FakeSyncCursorStore`, `RecordingAnalyticsClient`,
   `FakeRemoteConfigClient`, `RecordingLogger`, `FakeAuthRepository`, `FakeAuthTokenProvider`,
   `InMemoryAuthSessionStore`, `FakeSpeechRecognizer`, `FakeSpeechSynthesizer`). Depends on `:foundation`, `:sync`, `:authsession`,

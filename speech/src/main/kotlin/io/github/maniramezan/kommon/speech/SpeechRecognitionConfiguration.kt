@@ -6,8 +6,12 @@ import java.util.Locale
  * Settings for one speech recognition run.
  *
  * @property locale The language to recognize.
- * @property preferOnDevice Use on-device recognition when it is available, falling back to the
- *   system recognizer's offline preference otherwise.
+ * @property requiresOnDevice When true (the default), recognition runs only on a dedicated
+ *   on-device recognizer and fails with [SpeechRecognitionException.Reason.NotAvailable] if none is
+ *   available; audio is never sent to a cloud service. When false, an on-device recognizer is still
+ *   preferred, but the system's default recognition service is used if there is none. **The default
+ *   service may stream audio to remote servers**, even though offline recognition is requested.
+ *   [SpeechRecognitionEvent.Ready] reports which recognizer was used.
  * @property reportsAlternatives Whether to report other plausible transcriptions.
  * @property requestsWordDetails Whether to request per-word confidence and timing where the
  *   platform supports it (Android 14 and later).
@@ -18,7 +22,7 @@ import java.util.Locale
  */
 public data class SpeechRecognitionConfiguration(
     val locale: Locale,
-    val preferOnDevice: Boolean = true,
+    val requiresOnDevice: Boolean = true,
     val reportsAlternatives: Boolean = true,
     val requestsWordDetails: Boolean = true,
     val completeSilenceMillis: Long? = null,

@@ -6,7 +6,6 @@ import android.speech.tts.TextToSpeech
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -17,24 +16,26 @@ internal class AndroidTtsBackend(
     override fun voices(): List<SpeechVoice> =
         tts.voices.orEmpty().map { VoiceMapper.voice(it.name, it.locale, it.quality, it.isNetworkConnectionRequired) }
 
-    override fun prepare(request: SpeechSynthesisRequest): SpeechSynthesisException? {
+    override fun prepare(
+        request: SpeechSynthesisRequest,
+        voice: SpeechVoice,
+    ): SpeechSynthesisException? {
         tts.setSpeechRate(request.rate)
         tts.setPitch(request.pitch)
-        val voiceId = request.voiceId
-        if (voiceId != null) {
-            val voice = tts.voices.orEmpty().firstOrNull { it.name == voiceId }
-            val result = voice?.let { tts.setVoice(it) }
-            return if (result == TextToSpeech.SUCCESS) null else SpeechSynthesisException("Voice is not available", result)
-        }
-        val result = tts.setLanguage(Locale.forLanguageTag(request.languageTag))
-        val unavailable = result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED
-        return if (unavailable) SpeechSynthesisException("Language is not available", result) else null
+        val engineVoice = tts.voices.orEmpty().firstOrNull { it.name == voice.id }
+        val result = engineVoice?.let { tts.setVoice(it) }
+        return if (result == TextToSpeech.SUCCESS) null else SpeechSynthesisException("Voice could not be selected", result)
     }
 
     override fun speak(
         text: String,
         utteranceId: String,
-    ): Int = tts.speak(text, TextToSpeech.QUEUE_FLUSH, Bundle.EMPTY, utteranceId)
+        params: Map<String, String>,
+    ): Int {
+        val bundle = Bundle()
+        params.forEach { (key, value) -> bundle.putString(key, value) }
+        return tts.speak(text, TextToSpeech.QUEUE_FLUSH, bundle, utteranceId)
+    }
 
     override fun isSuccess(result: Int): Boolean = result == TextToSpeech.SUCCESS
 

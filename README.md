@@ -187,6 +187,12 @@ JsonEncodedStringArrayParser.parseOrPassthrough("""["one","two"]""")   // "one\n
 `AndroidSpeechRecognitionSession` and `AndroidSpeechSynthesisSession` implement the
 `SpeechRecognizing` / `SpeechSynthesizing` ports. The host app owns the `RECORD_AUDIO` permission.
 
+Speech is local-only by default. Recognition uses only the on-device recognizer
+(`requiresOnDevice = true`) and fails with `Reason.NotAvailable` if there is none (check
+`isOnDeviceRecognitionAvailable(context)` first); synthesis uses only voices that work offline
+(`allowsNetworkVoices = false`) and fails if the language has no local voice. Opting out
+(`requiresOnDevice = false`, `allowsNetworkVoices = true`) may send audio or text to remote servers.
+
 ```kotlin
 val recognizer: SpeechRecognizing = AndroidSpeechRecognitionSession(context)
 val configuration = SpeechRecognitionConfiguration(locale = Locale.US)
@@ -195,7 +201,7 @@ recognizer.recognize(configuration).collect { event ->
     when (event) {
         is SpeechRecognitionEvent.Transcript -> show(event.transcript.text)
         is SpeechRecognitionEvent.AudioLevel -> meter(event.level)
-        SpeechRecognitionEvent.Ready, SpeechRecognitionEvent.SilenceDetected -> Unit
+        is SpeechRecognitionEvent.Ready, SpeechRecognitionEvent.SilenceDetected -> Unit
     }
 }
 

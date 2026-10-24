@@ -17,9 +17,13 @@ import kotlinx.coroutines.Dispatchers
  * `RECORD_AUDIO` permission, otherwise the run fails with
  * [SpeechRecognitionException.Reason.PermissionDenied].
  *
- * When [SpeechRecognitionConfiguration.preferOnDevice] is set and on-device recognition is
- * available (Android 12 and later) a dedicated on-device recognizer is used; otherwise the system
- * recognizer is used with the offline preference. Per-word confidence and timing require Android 14.
+ * By default ([SpeechRecognitionConfiguration.requiresOnDevice]) only a dedicated on-device
+ * recognizer (Android 12 and later) is used. If none is available the flow fails with
+ * [SpeechRecognitionException.Reason.NotAvailable] and the system default recognizer is never
+ * created; use [isOnDeviceRecognitionAvailable] to check first. With `requiresOnDevice = false` the
+ * default recognition service is used as a fallback, **which may stream audio to remote servers**.
+ * [SpeechRecognitionEvent.Ready] reports which recognizer ran. Per-word confidence and timing
+ * require Android 14.
  * If the recognizer reports no match after partial text was heard, that text is delivered as the
  * final result instead of failing.
  *

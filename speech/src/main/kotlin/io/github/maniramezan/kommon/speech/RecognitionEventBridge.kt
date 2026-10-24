@@ -28,6 +28,7 @@ internal interface RecognitionSink {
  */
 internal class RecognitionEventBridge(
     private val configuration: SpeechRecognitionConfiguration,
+    private val kind: RecognizerKind,
     private val sdkInt: Int,
     private val sink: RecognitionSink,
     private val logger: KommonLogger,
@@ -37,8 +38,8 @@ internal class RecognitionEventBridge(
     private var finished = false
 
     override fun onReadyForSpeech(params: Bundle?) {
-        logger.debug(TAG, "ready locale=${configuration.locale.toLanguageTag()}")
-        sink.emit(SpeechRecognitionEvent.Ready)
+        logger.debug(TAG, "ready locale=${configuration.locale.toLanguageTag()} recognizer=$kind")
+        sink.emit(SpeechRecognitionEvent.Ready(kind))
     }
 
     override fun onBeginningOfSpeech() {

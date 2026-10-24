@@ -8,13 +8,17 @@ internal interface TtsBackend {
     /** Every voice the engine offers, unsorted. */
     fun voices(): List<SpeechVoice>
 
-    /** Applies rate, pitch, and voice or language for [request]; returns a failure if it can't be satisfied. */
-    fun prepare(request: SpeechSynthesisRequest): SpeechSynthesisException?
+    /** Applies rate, pitch, and [voice] for [request]; returns a failure if it can't be satisfied. */
+    fun prepare(
+        request: SpeechSynthesisRequest,
+        voice: SpeechVoice,
+    ): SpeechSynthesisException?
 
-    /** Queues [text] flushing anything pending; returns the `TextToSpeech` result code. */
+    /** Queues [text] flushing anything pending, with extra utterance [params]; returns the result code. */
     fun speak(
         text: String,
         utteranceId: String,
+        params: Map<String, String>,
     ): Int
 
     /** Whether [speak] returning [result] means success. */

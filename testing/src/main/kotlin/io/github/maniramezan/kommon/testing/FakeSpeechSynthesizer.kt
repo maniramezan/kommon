@@ -12,7 +12,9 @@ import kotlinx.coroutines.flow.flow
  * Scripted [SpeechSynthesizing] for consumer tests.
  *
  * Each collected [speak] records its request, emits [script] in order, then throws [error] if set,
- * otherwise completes.
+ * otherwise completes. When [voicesToReturn] is not empty the fake also applies the real voice rules:
+ * unless the request allows network voices, speaking fails with [SpeechSynthesisException] if no
+ * local voice exists for the language.
  *
  * @property script The events every request emits.
  * @property voicesToReturn The voices [voices] returns.
@@ -33,6 +35,9 @@ public class FakeSpeechSynthesizer(
     override fun speak(request: SpeechSynthesisRequest): Flow<SpeechSynthesisEvent> =
         flow {
             spoken += request
+            if (voicesToReturn.isNotEmpty() && SpeechVoice.best(request.languageTag, voicesToReturn, request.allowsNetworkVoices) == null) {
+                throw SpeechSynthesisException("No acceptable voice for ${request.languageTag}")
+            }
             script.forEach { emit(it) }
             error?.let { throw it }
         }
