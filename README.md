@@ -20,9 +20,10 @@ authentication, analytics, remote-config, and telemetry SDKs.
 | `crashreporting` / `telemetry` | Crash-reporting port; OpenTelemetry-shaped spans with a `trace {}` helper. |
 | `remoteconfig` / `remoteconfig-debug` | Typed, validated config keys, a shared resolver, and debug-only local overrides. |
 | `parsing` | Localized-value and JSON string-array parsers. |
+| `speech` | On-device speech recognition and synthesis over Android's `SpeechRecognizer` / `TextToSpeech`, plus word-level transcript alignment. |
 | `design-system` | Kotlin Multiplatform design tokens (colors, spacing, shapes, typography, motion) and WCAG contrast helpers. |
 | `debug-ui` | Compose debug screens for remote-config overrides and captured analytics, using Compose Material 3. |
-| `testing` | Consumer test fakes for sync, auth, analytics, logging, and remote config. |
+| `testing` | Consumer test fakes for sync, auth, analytics, logging, remote config, and speech. |
 
 ## Installation
 
@@ -180,6 +181,33 @@ LocalizedValueParser().parse("""{"en_us":"Hello","fr":"Bonjour"}""")   // "Hello
 LocalizedValueParser(listOf("fr")).parse("""{"en_us":"Hello","fr":"Bonjour"}""")   // "Bonjour"
 JsonEncodedStringArrayParser.parseOrPassthrough("""["one","two"]""")   // "one\ntwo"
 ```
+
+### Speech
+
+`AndroidSpeechRecognitionSession` and `AndroidSpeechSynthesisSession` implement the
+`SpeechRecognizing` / `SpeechSynthesizing` ports. The host app owns the `RECORD_AUDIO` permission.
+
+```kotlin
+val recognizer: SpeechRecognizing = AndroidSpeechRecognitionSession(context)
+val configuration = SpeechRecognitionConfiguration(locale = Locale.US)
+
+recognizer.recognize(configuration).collect { event ->
+    when (event) {
+        is SpeechRecognitionEvent.Transcript -> show(event.transcript.text)
+        is SpeechRecognitionEvent.AudioLevel -> meter(event.level)
+        SpeechRecognitionEvent.Ready, SpeechRecognitionEvent.SilenceDetected -> Unit
+    }
+}
+
+val alignment = TranscriptAlignment.align(
+    reference = "The quick brown fox",
+    heard = transcript.words.map { it.transcriptToken },
+)
+alignment.score
+```
+
+`SpeechModelAssets.status(context, locale)` reports whether the on-device model is installed and
+`requestDownload` triggers the download (Android 13+). Per-word confidence and timing need Android 14.
 
 ### Testing
 

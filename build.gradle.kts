@@ -51,6 +51,7 @@ dependencies {
     dokka(project(":remoteconfig"))
     dokka(project(":remoteconfig-debug"))
     dokka(project(":parsing"))
+    dokka(project(":speech"))
     dokka(project(":testing"))
     dokka(project(":design-system"))
     dokka(project(":debug-ui"))
