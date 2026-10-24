@@ -51,6 +51,37 @@ public final class io/github/maniramezan/kommon/testing/FakeRemoteConfigClient :
 	public fun value (Lio/github/maniramezan/kommon/remoteconfig/ConfigKey;)Lio/github/maniramezan/kommon/remoteconfig/ConfigValue;
 }
 
+public final class io/github/maniramezan/kommon/testing/FakeSpeechRecognizer : io/github/maniramezan/kommon/speech/SpeechRecognizing {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Lio/github/maniramezan/kommon/speech/SpeechRecognitionException;)V
+	public synthetic fun <init> (Ljava/util/List;Lio/github/maniramezan/kommon/speech/SpeechRecognitionException;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getConfigurations ()Ljava/util/List;
+	public final fun getError ()Lio/github/maniramezan/kommon/speech/SpeechRecognitionException;
+	public final fun getScript ()Ljava/util/List;
+	public final fun getStopCount ()I
+	public fun recognize (Lio/github/maniramezan/kommon/speech/SpeechRecognitionConfiguration;)Lkotlinx/coroutines/flow/Flow;
+	public final fun setError (Lio/github/maniramezan/kommon/speech/SpeechRecognitionException;)V
+	public final fun setScript (Ljava/util/List;)V
+	public fun stop ()V
+}
+
+public final class io/github/maniramezan/kommon/testing/FakeSpeechSynthesizer : io/github/maniramezan/kommon/speech/SpeechSynthesizing {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Ljava/util/List;Lio/github/maniramezan/kommon/speech/SpeechSynthesisException;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Lio/github/maniramezan/kommon/speech/SpeechSynthesisException;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getError ()Lio/github/maniramezan/kommon/speech/SpeechSynthesisException;
+	public final fun getScript ()Ljava/util/List;
+	public final fun getSpoken ()Ljava/util/List;
+	public final fun getStopCount ()I
+	public final fun getVoicesToReturn ()Ljava/util/List;
+	public final fun setError (Lio/github/maniramezan/kommon/speech/SpeechSynthesisException;)V
+	public final fun setScript (Ljava/util/List;)V
+	public final fun setVoicesToReturn (Ljava/util/List;)V
+	public fun speak (Lio/github/maniramezan/kommon/speech/SpeechSynthesisRequest;)Lkotlinx/coroutines/flow/Flow;
+	public fun stop ()V
+	public fun voices (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class io/github/maniramezan/kommon/testing/FakeSyncCursorStore : io/github/maniramezan/kommon/sync/SyncCursorStore {
 	public fun <init> ()V
 	public fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

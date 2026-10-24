@@ -64,10 +64,18 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   `ConfigOverrideSource`). Depends on `:remoteconfig` and `:foundation`.
 - `:parsing` — `LocalizedValueParser`, `JsonEncodedStringArrayParser`. No deps beyond
   kotlinx-serialization.
+- `:speech` — `SpeechRecognizing` / `AndroidSpeechRecognitionSession` (cold `Flow` of
+  `SpeechRecognitionEvent` over `android.speech.SpeechRecognizer`), `SpeechSynthesizing` /
+  `AndroidSpeechSynthesisSession` (over `TextToSpeech`), `SpeechModelAssets` (on-device model
+  status/download), `SpeechVoice` ranking, and the pure `TranscriptAlignment` (word-level edit
+  distance, port of the Swift `SwiftCommonsSpeech` semantics). Android-framework calls sit behind
+  thin internal backends (`RecognizerBackend`, `TtsBackend`, `ModelBackend`) so the run logic
+  (`SpeechRecognitionRunner`, `SpeechSynthesisRunner`) and result mapping are plain JVM tests.
+  Depends on `:foundation` only.
 - `:testing` — fakes for consumer unit tests (`FakeSyncCursorStore`, `RecordingAnalyticsClient`,
   `FakeRemoteConfigClient`, `RecordingLogger`, `FakeAuthRepository`, `FakeAuthTokenProvider`,
-  `InMemoryAuthSessionStore`). Depends on `:foundation`, `:sync`, `:authsession`,
-  `:analytics-core`, `:remoteconfig` as `api` so consumers get them transitively on their test
+  `InMemoryAuthSessionStore`, `FakeSpeechRecognizer`, `FakeSpeechSynthesizer`). Depends on `:foundation`, `:sync`, `:authsession`,
+  `:analytics-core`, `:remoteconfig`, `:speech` as `api` so consumers get them transitively on their test
   classpath. When you add a port to a module, add a matching fake here.
 - `:design-system` — Kotlin Multiplatform (Android, JVM, iOS, Wasm) platform-neutral design tokens
   (`ColorToken`, spacing/shape/typography/motion tokens, `ThemeTokens`, `KommonDesignTokens`) and
