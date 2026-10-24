@@ -13,6 +13,7 @@ dependencies {
     api(project(":authsession"))
     api(project(":analytics-core"))
     api(project(":remoteconfig"))
+    api(project(":speech"))
     api(libs.kotlinx.coroutines.test)
     api(libs.mockk)
     api(libs.turbine)

@@ -1,0 +1,343 @@
+public final class io/github/maniramezan/kommon/speech/AlignedToken {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Float;Lio/github/maniramezan/kommon/speech/AlignedTokenStatus;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/Float;
+	public final fun component4 ()Lio/github/maniramezan/kommon/speech/AlignedTokenStatus;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Float;Lio/github/maniramezan/kommon/speech/AlignedTokenStatus;)Lio/github/maniramezan/kommon/speech/AlignedToken;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/speech/AlignedToken;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Float;Lio/github/maniramezan/kommon/speech/AlignedTokenStatus;ILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/AlignedToken;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getConfidence ()Ljava/lang/Float;
+	public final fun getHeard ()Ljava/lang/String;
+	public final fun getReference ()Ljava/lang/String;
+	public final fun getStatus ()Lio/github/maniramezan/kommon/speech/AlignedTokenStatus;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/AlignedTokenStatus : java/lang/Enum {
+	public static final field Insertion Lio/github/maniramezan/kommon/speech/AlignedTokenStatus;
+	public static final field LowConfidence Lio/github/maniramezan/kommon/speech/AlignedTokenStatus;
+	public static final field Match Lio/github/maniramezan/kommon/speech/AlignedTokenStatus;
+	public static final field Omission Lio/github/maniramezan/kommon/speech/AlignedTokenStatus;
+	public static final field Substitution Lio/github/maniramezan/kommon/speech/AlignedTokenStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/maniramezan/kommon/speech/AlignedTokenStatus;
+	public static fun values ()[Lio/github/maniramezan/kommon/speech/AlignedTokenStatus;
+}
+
+public final class io/github/maniramezan/kommon/speech/AndroidSpeechRecognitionSession : io/github/maniramezan/kommon/speech/SpeechRecognizing {
+	public fun <init> (Landroid/content/Context;Lio/github/maniramezan/kommon/foundation/KommonLogger;)V
+	public synthetic fun <init> (Landroid/content/Context;Lio/github/maniramezan/kommon/foundation/KommonLogger;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun recognize (Lio/github/maniramezan/kommon/speech/SpeechRecognitionConfiguration;)Lkotlinx/coroutines/flow/Flow;
+	public fun stop ()V
+}
+
+public final class io/github/maniramezan/kommon/speech/AndroidSpeechSynthesisSession : io/github/maniramezan/kommon/speech/SpeechSynthesizing, java/lang/AutoCloseable {
+	public fun <init> (Landroid/content/Context;Lio/github/maniramezan/kommon/foundation/KommonLogger;)V
+	public synthetic fun <init> (Landroid/content/Context;Lio/github/maniramezan/kommon/foundation/KommonLogger;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public fun speak (Lio/github/maniramezan/kommon/speech/SpeechSynthesisRequest;)Lkotlinx/coroutines/flow/Flow;
+	public fun stop ()V
+	public fun voices (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/maniramezan/kommon/speech/RecognizedUtterance {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/util/List;)Lio/github/maniramezan/kommon/speech/RecognizedUtterance;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/speech/RecognizedUtterance;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/RecognizedUtterance;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlternatives ()Ljava/util/List;
+	public final fun getText ()Ljava/lang/String;
+	public final fun getWords ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/RecognizedWord {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Float;Ljava/lang/Long;Ljava/lang/Long;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Float;Ljava/lang/Long;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Float;
+	public final fun component3 ()Ljava/lang/Long;
+	public final fun component4 ()Ljava/lang/Long;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Float;Ljava/lang/Long;Ljava/lang/Long;)Lio/github/maniramezan/kommon/speech/RecognizedWord;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/speech/RecognizedWord;Ljava/lang/String;Ljava/lang/Float;Ljava/lang/Long;Ljava/lang/Long;ILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/RecognizedWord;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getConfidence ()Ljava/lang/Float;
+	public final fun getDurationMillis ()Ljava/lang/Long;
+	public final fun getStartMillis ()Ljava/lang/Long;
+	public final fun getText ()Ljava/lang/String;
+	public final fun getTranscriptToken ()Lio/github/maniramezan/kommon/speech/TranscriptToken;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechModelAssets {
+	public static final field INSTANCE Lio/github/maniramezan/kommon/speech/SpeechModelAssets;
+	public final fun requestDownload (Landroid/content/Context;Ljava/util/Locale;Lio/github/maniramezan/kommon/foundation/KommonLogger;)V
+	public static synthetic fun requestDownload$default (Lio/github/maniramezan/kommon/speech/SpeechModelAssets;Landroid/content/Context;Ljava/util/Locale;Lio/github/maniramezan/kommon/foundation/KommonLogger;ILjava/lang/Object;)V
+	public final fun status (Landroid/content/Context;Ljava/util/Locale;Lio/github/maniramezan/kommon/foundation/KommonLogger;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun status$default (Lio/github/maniramezan/kommon/speech/SpeechModelAssets;Landroid/content/Context;Ljava/util/Locale;Lio/github/maniramezan/kommon/foundation/KommonLogger;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechModelAssets$Status : java/lang/Enum {
+	public static final field Downloading Lio/github/maniramezan/kommon/speech/SpeechModelAssets$Status;
+	public static final field Installed Lio/github/maniramezan/kommon/speech/SpeechModelAssets$Status;
+	public static final field NotInstalled Lio/github/maniramezan/kommon/speech/SpeechModelAssets$Status;
+	public static final field Unknown Lio/github/maniramezan/kommon/speech/SpeechModelAssets$Status;
+	public static final field Unsupported Lio/github/maniramezan/kommon/speech/SpeechModelAssets$Status;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/maniramezan/kommon/speech/SpeechModelAssets$Status;
+	public static fun values ()[Lio/github/maniramezan/kommon/speech/SpeechModelAssets$Status;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechRecognitionConfiguration {
+	public static final field DEFAULT_MAX_ALTERNATIVES I
+	public fun <init> (Ljava/util/Locale;ZZZLjava/lang/Long;I)V
+	public synthetic fun <init> (Ljava/util/Locale;ZZZLjava/lang/Long;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/Locale;
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Ljava/lang/Long;
+	public final fun component6 ()I
+	public final fun copy (Ljava/util/Locale;ZZZLjava/lang/Long;I)Lio/github/maniramezan/kommon/speech/SpeechRecognitionConfiguration;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/speech/SpeechRecognitionConfiguration;Ljava/util/Locale;ZZZLjava/lang/Long;IILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/SpeechRecognitionConfiguration;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCompleteSilenceMillis ()Ljava/lang/Long;
+	public final fun getLocale ()Ljava/util/Locale;
+	public final fun getMaxAlternatives ()I
+	public final fun getPreferOnDevice ()Z
+	public final fun getReportsAlternatives ()Z
+	public final fun getRequestsWordDetails ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/maniramezan/kommon/speech/SpeechRecognitionEvent {
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechRecognitionEvent$AudioLevel : io/github/maniramezan/kommon/speech/SpeechRecognitionEvent {
+	public fun <init> (F)V
+	public final fun component1 ()F
+	public final fun copy (F)Lio/github/maniramezan/kommon/speech/SpeechRecognitionEvent$AudioLevel;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/speech/SpeechRecognitionEvent$AudioLevel;FILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/SpeechRecognitionEvent$AudioLevel;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLevel ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechRecognitionEvent$Ready : io/github/maniramezan/kommon/speech/SpeechRecognitionEvent {
+	public static final field INSTANCE Lio/github/maniramezan/kommon/speech/SpeechRecognitionEvent$Ready;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechRecognitionEvent$SilenceDetected : io/github/maniramezan/kommon/speech/SpeechRecognitionEvent {
+	public static final field INSTANCE Lio/github/maniramezan/kommon/speech/SpeechRecognitionEvent$SilenceDetected;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechRecognitionEvent$Transcript : io/github/maniramezan/kommon/speech/SpeechRecognitionEvent {
+	public fun <init> (Lio/github/maniramezan/kommon/speech/SpeechTranscript;)V
+	public final fun component1 ()Lio/github/maniramezan/kommon/speech/SpeechTranscript;
+	public final fun copy (Lio/github/maniramezan/kommon/speech/SpeechTranscript;)Lio/github/maniramezan/kommon/speech/SpeechRecognitionEvent$Transcript;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/speech/SpeechRecognitionEvent$Transcript;Lio/github/maniramezan/kommon/speech/SpeechTranscript;ILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/SpeechRecognitionEvent$Transcript;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTranscript ()Lio/github/maniramezan/kommon/speech/SpeechTranscript;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechRecognitionException : java/lang/Exception {
+	public fun <init> (Lio/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Lio/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason;Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getReason ()Lio/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason : java/lang/Enum {
+	public static final field Busy Lio/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason;
+	public static final field ModelNotInstalled Lio/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason;
+	public static final field Network Lio/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason;
+	public static final field NoMatch Lio/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason;
+	public static final field NotAvailable Lio/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason;
+	public static final field Other Lio/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason;
+	public static final field PermissionDenied Lio/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason;
+	public static final field UnsupportedLocale Lio/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason;
+	public static fun values ()[Lio/github/maniramezan/kommon/speech/SpeechRecognitionException$Reason;
+}
+
+public abstract interface class io/github/maniramezan/kommon/speech/SpeechRecognizing {
+	public abstract fun recognize (Lio/github/maniramezan/kommon/speech/SpeechRecognitionConfiguration;)Lkotlinx/coroutines/flow/Flow;
+	public abstract fun stop ()V
+}
+
+public abstract interface class io/github/maniramezan/kommon/speech/SpeechSynthesisEvent {
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechSynthesisEvent$Cancelled : io/github/maniramezan/kommon/speech/SpeechSynthesisEvent {
+	public static final field INSTANCE Lio/github/maniramezan/kommon/speech/SpeechSynthesisEvent$Cancelled;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechSynthesisEvent$Finished : io/github/maniramezan/kommon/speech/SpeechSynthesisEvent {
+	public static final field INSTANCE Lio/github/maniramezan/kommon/speech/SpeechSynthesisEvent$Finished;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechSynthesisEvent$Started : io/github/maniramezan/kommon/speech/SpeechSynthesisEvent {
+	public static final field INSTANCE Lio/github/maniramezan/kommon/speech/SpeechSynthesisEvent$Started;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechSynthesisEvent$WillSpeak : io/github/maniramezan/kommon/speech/SpeechSynthesisEvent {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lio/github/maniramezan/kommon/speech/SpeechSynthesisEvent$WillSpeak;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/speech/SpeechSynthesisEvent$WillSpeak;IIILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/SpeechSynthesisEvent$WillSpeak;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEnd ()I
+	public final fun getStart ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechSynthesisException : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getErrorCode ()Ljava/lang/Integer;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechSynthesisRequest {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FF)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FF)Lio/github/maniramezan/kommon/speech/SpeechSynthesisRequest;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/speech/SpeechSynthesisRequest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/SpeechSynthesisRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLanguageTag ()Ljava/lang/String;
+	public final fun getPitch ()F
+	public final fun getRate ()F
+	public final fun getText ()Ljava/lang/String;
+	public final fun getVoiceId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/maniramezan/kommon/speech/SpeechSynthesizing {
+	public abstract fun speak (Lio/github/maniramezan/kommon/speech/SpeechSynthesisRequest;)Lkotlinx/coroutines/flow/Flow;
+	public abstract fun stop ()V
+	public abstract fun voices (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechTranscript {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;)Lio/github/maniramezan/kommon/speech/SpeechTranscript;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/speech/SpeechTranscript;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/SpeechTranscript;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFinalizedText ()Ljava/lang/String;
+	public final fun getFinalizedUtterances ()Ljava/util/List;
+	public final fun getText ()Ljava/lang/String;
+	public final fun getVolatileText ()Ljava/lang/String;
+	public final fun getWords ()Ljava/util/List;
+	public fun hashCode ()I
+	public final fun isFinal ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechVoice {
+	public static final field Companion Lio/github/maniramezan/kommon/speech/SpeechVoice$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/github/maniramezan/kommon/speech/SpeechVoice$Quality;Z)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lio/github/maniramezan/kommon/speech/SpeechVoice$Quality;
+	public final fun component5 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/github/maniramezan/kommon/speech/SpeechVoice$Quality;Z)Lio/github/maniramezan/kommon/speech/SpeechVoice;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/speech/SpeechVoice;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/github/maniramezan/kommon/speech/SpeechVoice$Quality;ZILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/SpeechVoice;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getLanguageTag ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getQuality ()Lio/github/maniramezan/kommon/speech/SpeechVoice$Quality;
+	public final fun getRequiresNetwork ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechVoice$Companion {
+	public final fun best (Ljava/lang/String;Ljava/util/List;)Lio/github/maniramezan/kommon/speech/SpeechVoice;
+}
+
+public final class io/github/maniramezan/kommon/speech/SpeechVoice$Quality : java/lang/Enum {
+	public static final field Enhanced Lio/github/maniramezan/kommon/speech/SpeechVoice$Quality;
+	public static final field Premium Lio/github/maniramezan/kommon/speech/SpeechVoice$Quality;
+	public static final field Standard Lio/github/maniramezan/kommon/speech/SpeechVoice$Quality;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/maniramezan/kommon/speech/SpeechVoice$Quality;
+	public static fun values ()[Lio/github/maniramezan/kommon/speech/SpeechVoice$Quality;
+}
+
+public final class io/github/maniramezan/kommon/speech/TranscriptAlignment {
+	public static final field Companion Lio/github/maniramezan/kommon/speech/TranscriptAlignment$Companion;
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lio/github/maniramezan/kommon/speech/TranscriptAlignment;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/speech/TranscriptAlignment;Ljava/util/List;ILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/TranscriptAlignment;
+	public final fun count (Lio/github/maniramezan/kommon/speech/AlignedTokenStatus;)I
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCompleteness ()D
+	public final fun getReferenceWordCount ()I
+	public final fun getScore ()D
+	public final fun getTokens ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/maniramezan/kommon/speech/TranscriptAlignment$Companion {
+	public final fun align (Ljava/lang/String;Ljava/lang/String;Ljava/util/Locale;)Lio/github/maniramezan/kommon/speech/TranscriptAlignment;
+	public final fun align (Ljava/lang/String;Ljava/util/List;FLjava/util/Locale;)Lio/github/maniramezan/kommon/speech/TranscriptAlignment;
+	public static synthetic fun align$default (Lio/github/maniramezan/kommon/speech/TranscriptAlignment$Companion;Ljava/lang/String;Ljava/lang/String;Ljava/util/Locale;ILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/TranscriptAlignment;
+	public static synthetic fun align$default (Lio/github/maniramezan/kommon/speech/TranscriptAlignment$Companion;Ljava/lang/String;Ljava/util/List;FLjava/util/Locale;ILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/TranscriptAlignment;
+}
+
+public final class io/github/maniramezan/kommon/speech/TranscriptToken {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Float;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Float;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Float;)Lio/github/maniramezan/kommon/speech/TranscriptToken;
+	public static synthetic fun copy$default (Lio/github/maniramezan/kommon/speech/TranscriptToken;Ljava/lang/String;Ljava/lang/Float;ILjava/lang/Object;)Lio/github/maniramezan/kommon/speech/TranscriptToken;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getConfidence ()Ljava/lang/Float;
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
