@@ -63,6 +63,15 @@ class SpeechVoiceTest {
     }
 
     @Test
+    fun `network voices are filtered out unless allowed`() {
+        val network = voice("net", "en-US", Quality.Premium, network = true)
+        val local = voice("local", "en-GB", Quality.Standard)
+        assertEquals(local, SpeechVoice.best("en-US", listOf(network, local)))
+        assertNull(SpeechVoice.best("en-US", listOf(network)))
+        assertEquals(network, SpeechVoice.best("en-US", listOf(network, local), allowsNetwork = true))
+    }
+
+    @Test
     fun `android voice quality maps to tiers`() {
         assertEquals(Quality.Premium, VoiceMapper.quality(Voice.QUALITY_VERY_HIGH))
         assertEquals(Quality.Enhanced, VoiceMapper.quality(Voice.QUALITY_HIGH))

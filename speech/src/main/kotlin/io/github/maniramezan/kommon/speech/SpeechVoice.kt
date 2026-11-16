@@ -9,7 +9,8 @@ import java.util.Locale
  * @property name The voice's display name.
  * @property languageTag The BCP 47 language tag, such as `en-US`.
  * @property quality The voice's quality tier.
- * @property requiresNetwork Whether the voice needs a network connection to speak.
+ * @property requiresNetwork Whether the voice needs a network connection to speak (audio text may
+ *   then be sent to a remote server).
  */
 public data class SpeechVoice(
     val id: String,
@@ -38,15 +39,21 @@ public data class SpeechVoice(
          * region (`en-GB`). Within each group, higher [quality] wins, then voices that work
          * offline, then name order.
          *
-         * @return `null` when no voice speaks the language.
+         * @param languageTag The wanted BCP 47 language tag.
+         * @param voices The voices to choose from.
+         * @param allowsNetwork Whether voices that [requiresNetwork] may be chosen. When false (the
+         *   default) they are filtered out entirely.
+         * @return `null` when no acceptable voice speaks the language.
          */
         public fun best(
             languageTag: String,
             voices: List<SpeechVoice>,
+            allowsNetwork: Boolean = false,
         ): SpeechVoice? {
             val wanted = normalize(languageTag)
             val wantedLanguage = baseLanguage(wanted)
             return voices
+                .filter { allowsNetwork || !it.requiresNetwork }
                 .filter { baseLanguage(normalize(it.languageTag)) == wantedLanguage }
                 .sortedWith(
                     compareByDescending<SpeechVoice> { normalize(it.languageTag) == wanted }

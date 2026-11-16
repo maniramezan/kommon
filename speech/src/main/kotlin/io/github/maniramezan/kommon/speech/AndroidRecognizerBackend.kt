@@ -1,8 +1,8 @@
 package io.github.maniramezan.kommon.speech
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -10,7 +10,7 @@ import android.speech.SpeechRecognizer
 /** [RecognizerBackend] over a real `SpeechRecognizer`. Thin by design: no logic worth testing. */
 internal class AndroidRecognizerBackend(
     private val recognizer: SpeechRecognizer,
-    override val usesOnDeviceRecognizer: Boolean,
+    override val kind: RecognizerKind,
 ) : RecognizerBackend {
     override fun start(
         listener: RecognitionListener,
@@ -38,19 +38,24 @@ internal class AndroidRecognizerBackend(
     }
 }
 
-/** Creates [AndroidRecognizerBackend]s, preferring a dedicated on-device recognizer when asked. */
+/**
+ * Creates [AndroidRecognizerBackend]s. With [SpeechRecognitionConfiguration.requiresOnDevice] it
+ * only ever creates an on-device recognizer and never touches `createSpeechRecognizer`.
+ */
 internal class AndroidRecognizerBackendFactory(
     private val context: Context,
 ) : RecognizerBackendFactory {
-    override fun create(configuration: SpeechRecognitionConfiguration): RecognizerBackend? =
-        if (configuration.preferOnDevice && isOnDeviceAvailable()) {
-            AndroidRecognizerBackend(SpeechRecognizer.createOnDeviceSpeechRecognizer(context), usesOnDeviceRecognizer = true)
-        } else if (SpeechRecognizer.isRecognitionAvailable(context)) {
-            AndroidRecognizerBackend(SpeechRecognizer.createSpeechRecognizer(context), usesOnDeviceRecognizer = false)
-        } else {
-            null
+    // The on-device branch is only reachable when isOnDeviceRecognitionAvailable (API 31+) is true.
+    @SuppressLint("NewApi")
+    override fun create(configuration: SpeechRecognitionConfiguration): RecognizerBackend? {
+        val onDeviceAvailable = isOnDeviceRecognitionAvailable(context)
+        val defaultAvailable = !configuration.requiresOnDevice && SpeechRecognizer.isRecognitionAvailable(context)
+        return when (RecognizerSelection.choose(configuration.requiresOnDevice, onDeviceAvailable, defaultAvailable)) {
+            RecognizerKind.OnDevice ->
+                AndroidRecognizerBackend(SpeechRecognizer.createOnDeviceSpeechRecognizer(context), RecognizerKind.OnDevice)
+            RecognizerKind.DefaultService ->
+                AndroidRecognizerBackend(SpeechRecognizer.createSpeechRecognizer(context), RecognizerKind.DefaultService)
+            null -> null
         }
-
-    private fun isOnDeviceAvailable(): Boolean =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && SpeechRecognizer.isOnDeviceRecognitionAvailable(context)
+    }
 }
