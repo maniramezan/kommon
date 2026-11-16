@@ -25,8 +25,6 @@ work:
 
 - `android-gradle-logic` for Gradle convention plugins, version catalogs, and module wiring.
 - `gradle-build-performance` for slow Gradle builds, CI time, or dependency graph cost.
-- `kotlin-backend-jpa-entity-mapping` if a future module touches JPA/Room entity design.
-- `kotlin-tooling-java-to-kotlin` if porting more Java-era Novalingo code into this repo.
 - `kmp-library-conventions` (from the KMPComponents repo's `skills/`) for public API shape, ABI
   baselines, version-compatibility and target changes (notably `:design-system`), and release rules
   shared with KMPComponents and kmp-code-editor. This file keeps kommon's own values.
@@ -98,7 +96,8 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   Compose Material 3. Depends on `:remoteconfig-debug` and `:analytics-debug`. The only module allowed
   to contain rendered UI; pure logic lives in `*Model.kt` files with plain JVM tests, composables
   are tested with Robolectric Compose tests and excluded from the JaCoCo ratio.
-- `build-logic/` — Gradle convention plugin (`kommon.android.library`).
+- `build-logic/` — Gradle convention plugin (`kommon.android.library`), JaCoCo gate, and the
+  release-AAR API validation wiring (`ApiValidation.kt`, `ExtractApiClassesTask.kt`).
 - `config/detekt/detekt.yml` — shared detekt overrides.
 
 ## Current Architecture Decisions
@@ -120,8 +119,11 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   live in `KMPComponents`. Only `:debug-ui` may use Compose, to render kommon's debug stores.
   It uses published Compose Material 3 artifacts and has no dependency on KMPComponents.
   No other module depends on `:debug-ui`, so consumers opt into its UI dependencies explicitly.
-- The library is pre-1.0 (`0.1.0` and climbing); breaking API changes are still acceptable but
-  should be called out explicitly, since Novalingo is the intended first consumer.
+- The library is pre-1.0 (see the latest GitHub Release for the current version); breaking API
+  changes are still acceptable but must be called out explicitly with a `!` commit type or a
+  `BREAKING CHANGE:` footer (the release workflow bumps minor for either while pre-1.0), since
+  Novalingo is the intended first consumer and every merge to
+  `main` publishes a release.
 
 ## Build Logic And Dependency Shape
 
@@ -131,7 +133,8 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
 - Module inclusion lives in `settings.gradle.kts`; update it when module topology changes.
 - Version pins live in `gradle/libs.versions.toml`; update the catalog instead of hardcoding
   versions in build scripts.
-- Every module applies `kommon.android.library` even where the code is pure Kotlin (matches the
+- Every module except `:design-system` (Kotlin Multiplatform) applies `kommon.android.library` even
+  where the code is pure Kotlin (matches the
   sibling `kenwork`/`ComposeUIComponents` convention of publishing everything as an Android library
   artifact with Robolectric available for tests that need it).
 - `explicit-api = strict` is enabled for all non-test compilations — every public declaration needs
