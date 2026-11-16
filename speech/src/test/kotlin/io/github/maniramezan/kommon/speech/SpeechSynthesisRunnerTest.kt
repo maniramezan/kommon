@@ -1,5 +1,6 @@
 package io.github.maniramezan.kommon.speech
 
+import android.speech.tts.TextToSpeech
 import app.cash.turbine.test
 import io.github.maniramezan.kommon.foundation.KommonLogger
 import io.github.maniramezan.kommon.speech.SpeechVoice.Quality
@@ -7,31 +8,41 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
+private val LOCAL_VOICE = SpeechVoice("local", "local", "en-US", Quality.Standard, false)
+private val NETWORK_VOICE = SpeechVoice("net", "net", "en-US", Quality.Premium, true)
+
 class SpeechSynthesisRunnerTest {
     private class FakeBackend : TtsBackend {
-        var voicesResult: () -> List<SpeechVoice> = { emptyList() }
+        var voicesResult: () -> List<SpeechVoice> = { listOf(LOCAL_VOICE) }
         var prepareFailure: SpeechSynthesisException? = null
         var speakResult = 0
         val spoken = mutableListOf<Pair<String, String>>()
-        val prepared = mutableListOf<SpeechSynthesisRequest>()
+        val spokenParams = mutableListOf<Map<String, String>>()
+        val prepared = mutableListOf<Pair<SpeechSynthesisRequest, SpeechVoice>>()
         var stopCount = 0
         var shutdownCount = 0
 
         override fun voices(): List<SpeechVoice> = voicesResult()
 
-        override fun prepare(request: SpeechSynthesisRequest): SpeechSynthesisException? {
-            prepared += request
+        override fun prepare(
+            request: SpeechSynthesisRequest,
+            voice: SpeechVoice,
+        ): SpeechSynthesisException? {
+            prepared += request to voice
             return prepareFailure
         }
 
         override fun speak(
             text: String,
             utteranceId: String,
+            params: Map<String, String>,
         ): Int {
             spoken += text to utteranceId
+            spokenParams += params
             return speakResult
         }
 
@@ -80,6 +91,8 @@ class SpeechSynthesisRunnerTest {
         }
     }
 
+    private val localVoice = LOCAL_VOICE
+    private val networkVoice = NETWORK_VOICE
     private val backend = FakeBackend()
     private var routerSeen: SynthesisEventRouter? = null
     private var createCount = 0
@@ -108,7 +121,7 @@ class SpeechSynthesisRunnerTest {
                 assertEquals(SpeechSynthesisEvent.Finished, awaitItem())
                 awaitComplete()
             }
-            assertEquals(listOf(request), backend.prepared)
+            assertEquals(listOf(request to localVoice), backend.prepared)
             assertEquals("secret words", backend.spoken.single().first)
             assertTrue(logger.messages.none { it.contains("secret") })
         }
@@ -259,5 +272,60 @@ class SpeechSynthesisRunnerTest {
             assertEquals(1, backend.shutdownCount)
             runner.voices()
             assertEquals(2, createCount)
+        }
+
+    @Test
+    fun `network synthesis is disabled on the utterance unless allowed`() =
+        runTest {
+            runner.speak(request).test { cancelAndIgnoreRemainingEvents() }
+            runner.speak(request.copy(allowsNetworkVoices = true)).test { cancelAndIgnoreRemainingEvents() }
+            assertEquals(listOf(mapOf(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS to "false"), emptyMap()), backend.spokenParams)
+        }
+
+    @Test
+    fun `a network voice is never used by default even when it is the better one`() =
+        runTest {
+            backend.voicesResult = { listOf(networkVoice, localVoice) }
+            runner.speak(request).test { cancelAndIgnoreRemainingEvents() }
+            assertEquals(localVoice, backend.prepared.single().second)
+        }
+
+    @Test
+    fun `an explicit network voice id is rejected in favor of the best local voice`() =
+        runTest {
+            backend.voicesResult = { listOf(networkVoice, localVoice) }
+            runner.speak(request.copy(voiceId = "net")).test { cancelAndIgnoreRemainingEvents() }
+            assertEquals(localVoice, backend.prepared.single().second)
+        }
+
+    @Test
+    fun `an explicit network voice is used when network voices are allowed`() =
+        runTest {
+            backend.voicesResult = { listOf(networkVoice, localVoice) }
+            runner.speak(request.copy(voiceId = "net", allowsNetworkVoices = true)).test { cancelAndIgnoreRemainingEvents() }
+            assertEquals(networkVoice, backend.prepared.single().second)
+        }
+
+    @Test
+    fun `with only network voices installed speaking fails instead of using the network`() =
+        runTest {
+            backend.voicesResult = { listOf(networkVoice) }
+            runner.speak(request).test {
+                val error = awaitError()
+                assertIs<SpeechSynthesisException>(error)
+                assertTrue(error.message.orEmpty().contains("local voice"))
+            }
+            assertTrue(backend.spoken.isEmpty())
+            assertTrue(backend.prepared.isEmpty())
+        }
+
+    @Test
+    fun `a failure reading voices fails the flow`() =
+        runTest {
+            backend.voicesResult = { error("engine died") }
+            runner.speak(request).test {
+                assertIs<SpeechSynthesisException>(awaitError())
+            }
+            assertTrue(backend.spoken.isEmpty())
         }
 }

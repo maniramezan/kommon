@@ -1,6 +1,7 @@
 package io.github.maniramezan.kommon.testing
 
 import app.cash.turbine.test
+import io.github.maniramezan.kommon.speech.RecognizerKind
 import io.github.maniramezan.kommon.speech.SpeechRecognitionConfiguration
 import io.github.maniramezan.kommon.speech.SpeechRecognitionEvent
 import io.github.maniramezan.kommon.speech.SpeechRecognitionException
@@ -23,9 +24,11 @@ class FakeSpeechRecognizerTest {
         runTest {
             val transcript = SpeechTranscript(volatileText = "hi")
             val recognizer =
-                FakeSpeechRecognizer(listOf(SpeechRecognitionEvent.Ready, SpeechRecognitionEvent.Transcript(transcript)))
+                FakeSpeechRecognizer(
+                    listOf(SpeechRecognitionEvent.Ready(RecognizerKind.OnDevice), SpeechRecognitionEvent.Transcript(transcript)),
+                )
             recognizer.recognize(configuration).test {
-                assertEquals(SpeechRecognitionEvent.Ready, awaitItem())
+                assertEquals(SpeechRecognitionEvent.Ready(RecognizerKind.OnDevice), awaitItem())
                 assertEquals(SpeechRecognitionEvent.Transcript(transcript), awaitItem())
                 awaitComplete()
             }
@@ -36,10 +39,25 @@ class FakeSpeechRecognizerTest {
     fun `throws the configured error after the script`() =
         runTest {
             val failure = SpeechRecognitionException(SpeechRecognitionException.Reason.NoMatch)
-            val recognizer = FakeSpeechRecognizer(listOf(SpeechRecognitionEvent.Ready), failure)
+            val recognizer = FakeSpeechRecognizer(listOf(SpeechRecognitionEvent.Ready(RecognizerKind.OnDevice)), failure)
             recognizer.recognize(configuration).test {
                 awaitItem()
                 assertEquals(failure, awaitError())
+            }
+        }
+
+    @Test
+    fun `fails with not available when on-device is required but unavailable`() =
+        runTest {
+            val recognizer = FakeSpeechRecognizer(listOf(SpeechRecognitionEvent.Ready(RecognizerKind.OnDevice)))
+            recognizer.isOnDeviceAvailable = false
+            recognizer.recognize(configuration).test {
+                val error = awaitError() as SpeechRecognitionException
+                assertEquals(SpeechRecognitionException.Reason.NotAvailable, error.reason)
+            }
+            recognizer.recognize(configuration.copy(requiresOnDevice = false)).test {
+                awaitItem()
+                awaitComplete()
             }
         }
 
@@ -65,6 +83,21 @@ class FakeSpeechSynthesizerTest {
                 awaitComplete()
             }
             assertEquals(listOf(request), synthesizer.spoken)
+        }
+
+    @Test
+    fun `applies the local voice rules when voices are configured`() =
+        runTest {
+            val network = SpeechVoice("n", "N", "en-US", SpeechVoice.Quality.Premium, true)
+            val synthesizer = FakeSpeechSynthesizer(voicesToReturn = listOf(network))
+            synthesizer.speak(request).test {
+                assertIs<SpeechSynthesisException>(awaitError())
+            }
+            synthesizer.speak(request.copy(allowsNetworkVoices = true)).test {
+                awaitItem()
+                awaitItem()
+                awaitComplete()
+            }
         }
 
     @Test

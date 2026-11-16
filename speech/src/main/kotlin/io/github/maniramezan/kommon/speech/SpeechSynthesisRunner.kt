@@ -37,7 +37,7 @@ internal class SpeechSynthesisRunner(
             val engine = ensureBackend()
             val utteranceId = UUID.randomUUID().toString()
             router.register(utteranceId, ChannelSink(this))
-            val failure = engine.prepare(request)
+            val failure = prepare(engine, request)
             if (failure != null) {
                 router.unregister(utteranceId)
                 close(failure)
@@ -46,7 +46,7 @@ internal class SpeechSynthesisRunner(
             }
             currentUtteranceId = utteranceId
             logger.info(TAG, "speak chars=${request.text.length} language=${request.languageTag}")
-            val result = engine.speak(request.text, utteranceId)
+            val result = engine.speak(request.text, utteranceId, VoiceSelector.utteranceParams(request))
             if (!engine.isSuccess(result)) {
                 router.unregister(utteranceId)
                 logger.error(TAG, "speak rejected code=$result")
@@ -83,6 +83,26 @@ internal class SpeechSynthesisRunner(
             engine.stop()
             engine.shutdown()
             logger.info(TAG, "synthesizer shut down")
+        }
+    }
+
+    private fun prepare(
+        engine: TtsBackend,
+        request: SpeechSynthesisRequest,
+    ): SpeechSynthesisException? {
+        val voices =
+            runCatching { engine.voices() }
+                .onFailure { logger.error(TAG, "reading voices failed", it) }
+                .getOrElse { return SpeechSynthesisException("Could not read the available voices", cause = it) }
+        return when (val selection = VoiceSelector.select(request, voices)) {
+            is VoiceSelector.Selection.Unavailable -> {
+                logger.warning(TAG, "no acceptable voice language=${request.languageTag} allowsNetwork=${request.allowsNetworkVoices}")
+                selection.error
+            }
+            is VoiceSelector.Selection.Chosen -> {
+                logger.debug(TAG, "voice chosen quality=${selection.voice.quality} network=${selection.voice.requiresNetwork}")
+                engine.prepare(request, selection.voice)
+            }
         }
     }
 

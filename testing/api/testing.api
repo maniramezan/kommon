@@ -59,8 +59,10 @@ public final class io/github/maniramezan/kommon/testing/FakeSpeechRecognizer : i
 	public final fun getError ()Lio/github/maniramezan/kommon/speech/SpeechRecognitionException;
 	public final fun getScript ()Ljava/util/List;
 	public final fun getStopCount ()I
+	public final fun isOnDeviceAvailable ()Z
 	public fun recognize (Lio/github/maniramezan/kommon/speech/SpeechRecognitionConfiguration;)Lkotlinx/coroutines/flow/Flow;
 	public final fun setError (Lio/github/maniramezan/kommon/speech/SpeechRecognitionException;)V
+	public final fun setOnDeviceAvailable (Z)V
 	public final fun setScript (Ljava/util/List;)V
 	public fun stop ()V
 }

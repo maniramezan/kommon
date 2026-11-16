@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class SpeechRecognitionRunnerTest {
     private class FakeBackend(
-        override val usesOnDeviceRecognizer: Boolean = false,
+        override val kind: RecognizerKind = RecognizerKind.DefaultService,
         private val failOnStart: Boolean = false,
     ) : RecognizerBackend {
         private var attached: RecognitionListener? = null
@@ -72,11 +72,11 @@ class SpeechRecognitionRunnerTest {
     @Test
     fun `a full run emits events then completes and destroys the recognizer`() =
         runTest {
-            val backend = FakeBackend(usesOnDeviceRecognizer = true)
+            val backend = FakeBackend(RecognizerKind.OnDevice)
             runner(backend).recognize(configuration).test {
                 val listener = backend.listener()
                 listener.onReadyForSpeech(null)
-                assertEquals(SpeechRecognitionEvent.Ready, awaitItem())
+                assertEquals(SpeechRecognitionEvent.Ready(RecognizerKind.OnDevice), awaitItem())
                 listener.onResults(results("hello"))
                 assertEquals("hello", assertIs<SpeechRecognitionEvent.Transcript>(awaitItem()).transcript.text)
                 awaitComplete()
@@ -116,6 +116,44 @@ class SpeechRecognitionRunnerTest {
                 val error = awaitError() as SpeechRecognitionException
                 assertEquals(SpeechRecognitionException.Reason.NotAvailable, error.reason)
             }
+        }
+
+    @Test
+    fun `requiring on-device with none available fails with the on-device message`() =
+        runTest {
+            val requests = mutableListOf<SpeechRecognitionConfiguration>()
+            val runner =
+                SpeechRecognitionRunner(
+                    backendFactory = {
+                        requests += it
+                        null
+                    },
+                    sdkInt = 33,
+                    dispatcher = UnconfinedTestDispatcher(testScheduler),
+                    postToMain = { it() },
+                    logger = NoOpLogger,
+                )
+            runner.recognize(configuration).test {
+                val error = awaitError() as SpeechRecognitionException
+                assertEquals(SpeechRecognitionException.Reason.NotAvailable, error.reason)
+                assertEquals("On-device recognition is not available", error.message)
+            }
+            runner.recognize(configuration.copy(requiresOnDevice = false)).test {
+                assertEquals("Speech recognition is unavailable", awaitError().message)
+            }
+            assertEquals(listOf(true, false), requests.map { it.requiresOnDevice })
+        }
+
+    @Test
+    fun `the default service run reports its kind and asks for offline recognition`() =
+        runTest {
+            val backend = FakeBackend(RecognizerKind.DefaultService)
+            runner(backend).recognize(configuration.copy(requiresOnDevice = false)).test {
+                backend.listener().onReadyForSpeech(null)
+                assertEquals(SpeechRecognitionEvent.Ready(RecognizerKind.DefaultService), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+            assertEquals(true, backend.extras?.get(android.speech.RecognizerIntent.EXTRA_PREFER_OFFLINE))
         }
 
     @Test
