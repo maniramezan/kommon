@@ -126,6 +126,9 @@ val logger: KommonLogger = TimberLogger(tagPrefix = "MyApp")
 val initializer = AuthSessionInitializer(authRepository, tokenProvider, sessionStore, logger, appScope)
 initializer.start()   // warms the token before the first request, then tracks sign-in state
 
+// In the HTTP layer: wait (bounded) for the warm-up instead of racing it.
+withTimeoutOrNull(2.seconds) { initializer.awaitWarmUp() }   // READY, NO_TOKEN, or FAILED
+
 val message = error.authSignInErrorMessage(providerName = "Google")
 ```
 
