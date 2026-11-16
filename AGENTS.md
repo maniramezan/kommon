@@ -50,7 +50,8 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   `EmailPasswordAuth`, `SocialAuth`), `AuthUser`, `AuthSessionStore`, `AuthSessionInitializer`,
   `authSignInErrorMessage()`. Depends on `:foundation` for the logging seam.
 - `:analytics-core` — `AnalyticsClient` port, `AnalyticsEvent`, `NoOp`/`Logging`/
-  `CompositeAnalyticsClient` (per-client failure isolation), `AnalyticsPayloadSanitizer`. Depends on
+  `CompositeAnalyticsClient` (per-client failure isolation), `AnalyticsPayloadSanitizer` with a
+  configurable `AnalyticsPayloadPolicy` (limits + key redaction), and the `SanitizingAnalyticsClient` decorator. Depends on
   `:foundation`.
 - `:analytics-debug` — `AnalyticsDebugStore`, `AnalyticsCaptureClient` decorator. Depends on
   `:analytics-core`.
