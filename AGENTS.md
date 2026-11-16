@@ -48,7 +48,8 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   cursor guard, per-resource isolation, cancellation transparency) as load-bearing; see the KDoc on
   `SyncEngine` and `SyncEngineTest` before changing it. Load the `kommon-sync-engine` skill first.
 - `:authsession` — `AuthRepository` (composing `AuthStateProvider`, `AnonymousAuth`,
-  `EmailPasswordAuth`, `SocialAuth`), `AuthUser`, `AuthSessionStore`, `AuthSessionInitializer`,
+  `EmailPasswordAuth`, `SocialAuth`), `AuthUser`, `AuthSessionStore`, `AuthSessionInitializer` (with
+  an observable `AuthWarmUpState` and `awaitWarmUp()`),
   `authSignInErrorMessage()`. Depends on `:foundation` for the logging seam.
 - `:analytics-core` — `AnalyticsClient` port, `AnalyticsEvent`, `NoOp`/`Logging`/
   `CompositeAnalyticsClient` (per-client failure isolation), `AnalyticsPayloadSanitizer`. Depends on
