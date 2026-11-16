@@ -138,6 +138,9 @@ val message = error.authSignInErrorMessage(providerName = "Google")
 val analytics: AnalyticsClient =
     CompositeAnalyticsClient(listOf(firebaseAnalytics, amplitudeAnalytics), logger)   // failures isolated per client
 
+// Truncate to provider limits and redact sensitive keys before any client sees the payload.
+val safeAnalytics = SanitizingAnalyticsClient(analytics, AnalyticsPayloadPolicy(redactedKeys = setOf("email", "token")))
+
 // Debug builds: capture every call for an in-app "recent events" screen.
 val debugStore = InMemoryAnalyticsDebugStore(capacity = 200)
 val debugAnalytics = AnalyticsCaptureClient(delegate = analytics, debugStore = debugStore)
@@ -247,7 +250,9 @@ assertTrue(logger.entriesAt(RecordingLogger.Level.ERROR).isEmpty())
 ## Privacy
 
 Analytics properties, debug captures, logs, and crash-reporting context can contain sensitive
-data. Do not include credentials, tokens, email addresses, or other personal data. The analytics
+data. Do not include credentials, tokens, email addresses, or other personal data. Wrap analytics
+clients in `SanitizingAnalyticsClient` with `redactedKeys` as a safety net; it does not detect
+personal data in values under other keys. The analytics
 debug store is in-memory and bounded, but should be wired only into debug tooling and protected
 from production users.
 
