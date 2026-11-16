@@ -65,6 +65,17 @@ before invoking `upsertAll`; a transaction around that batch alone cannot preven
 edits from being overwritten. Adapters must enforce conditional writes against the current local
 version when local editing can race sync persistence.
 
+To show sync progress in UI, wrap your telemetry sink in `SyncStatusTracker`. It keeps the latest
+status per resource (`Syncing`, `Succeeded`, `Failed`, `Cancelled`) in a `StateFlow` and forwards
+every event to the sink it wraps:
+
+```kotlin
+val syncStatus = SyncStatusTracker(delegate = analyticsSyncTelemetry)
+val engine = SyncEngine(cursorStore = roomCursorStore, telemetry = syncStatus)
+
+val isSyncing = syncStatus.statuses.map { statuses -> statuses.values.any { it is SyncResourceStatus.Syncing } }
+```
+
 `limit` controls response page size. Existing calls send all pending rows in one push. When
 the server supports independent partial pushes and retries by stable row key, opt into bounded
 requests with a separate `pushBatchSize`:

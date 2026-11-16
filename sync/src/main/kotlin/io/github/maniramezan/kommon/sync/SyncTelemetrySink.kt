@@ -29,6 +29,12 @@ public interface SyncTelemetrySink {
     )
 
     public fun onFullResync(resourceName: String)
+
+    /**
+     * The pass for [resourceName] was cancelled after [onSyncStarted]. Cancellation is not a
+     * failure, so [onSyncFailed] is not called. Defaults to a no-op so existing sinks compile.
+     */
+    public fun onSyncCancelled(resourceName: String): Unit = Unit
 }
 
 /** A [SyncTelemetrySink] that discards every event. Default when telemetry isn't wired up. */

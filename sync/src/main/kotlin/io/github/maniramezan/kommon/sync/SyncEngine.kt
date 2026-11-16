@@ -131,6 +131,7 @@ public class SyncEngine(
                 )
             }
         } catch (cancellation: CancellationException) {
+            reportTelemetry { telemetry.onSyncCancelled(adapter.resourceName) }
             throw cancellation
         } catch (throwable: Throwable) {
             // Surface any failure to telemetry, then rethrow so syncAll's per-resource

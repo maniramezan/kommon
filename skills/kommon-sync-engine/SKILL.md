@@ -24,7 +24,7 @@ matching test in the same commit.
 | **Non-advancing cursor guard**: `hasMore` with a missing/repeated cursor fails instead of looping | `drive` | `pagination guard fails...` |
 | `fullResyncRequired`: apply push acks, purge clean rows, re-pull from `since = null` | `fullResync`, `drive` | `full resync purges...`, `full resync applies push acks...` |
 | **Per-resource isolation**: one failing adapter doesn't stop others; first error returned, rest suppressed | `syncAll` | `syncAll isolates...`, `...suppressed` |
-| **Cancellation transparency**: `CancellationException` propagates, never becomes `Result.failure` or `onSyncFailed` | `runCatchingNonCancellation`, `drive` | `cancellation propagates...` |
+| **Cancellation transparency**: `CancellationException` propagates, never becomes `Result.failure` or `onSyncFailed`; it reports `onSyncCancelled` instead | `runCatchingNonCancellation`, `drive` | `cancellation propagates...`, `SyncStatusTrackerTest` |
 | Telemetry is observational: sink exceptions never fail a sync | `reportTelemetry` | `telemetry failures do not fail sync` |
 | `appliedCount` in `onSyncCompleted` counts first-page acks | `drive` | `completed telemetry reports first-page acks...` |
 | Opt-in push batches bound upserts + deletes together, fully drain each response, and resume from its committed cursor | `drive`, `drainChanges` | `SyncEngineBatchingTest` |
