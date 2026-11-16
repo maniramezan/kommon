@@ -129,11 +129,13 @@ public abstract interface class io/github/maniramezan/kommon/sync/SyncResourceAd
 	public abstract fun api (Lio/github/maniramezan/kommon/sync/SyncRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun changeKey (Ljava/lang/Object;)Ljava/lang/String;
 	public abstract fun findExisting (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun findExistingAll (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getResourceName ()Ljava/lang/String;
 	public abstract fun isChangeDeleted (Ljava/lang/Object;)Z
 	public abstract fun pending (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun purgeSynced (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun reload (Lio/github/maniramezan/kommon/sync/SyncableEntity;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun reloadAll (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun syncKey (Lio/github/maniramezan/kommon/sync/SyncableEntity;)Ljava/lang/String;
 	public abstract fun toDelete (Lio/github/maniramezan/kommon/sync/SyncableEntity;)Ljava/lang/Object;
 	public abstract fun toEntity (Ljava/lang/Object;Lio/github/maniramezan/kommon/sync/SyncableEntity;)Lio/github/maniramezan/kommon/sync/SyncableEntity;
@@ -143,6 +145,8 @@ public abstract interface class io/github/maniramezan/kommon/sync/SyncResourceAd
 }
 
 public final class io/github/maniramezan/kommon/sync/SyncResourceAdapter$DefaultImpls {
+	public static fun findExistingAll (Lio/github/maniramezan/kommon/sync/SyncResourceAdapter;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun reloadAll (Lio/github/maniramezan/kommon/sync/SyncResourceAdapter;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun upsertAll (Lio/github/maniramezan/kommon/sync/SyncResourceAdapter;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
