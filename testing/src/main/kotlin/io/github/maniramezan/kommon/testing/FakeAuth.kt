@@ -6,6 +6,7 @@ import io.github.maniramezan.kommon.authsession.AuthSessionHint
 import io.github.maniramezan.kommon.authsession.AuthSessionStore
 import io.github.maniramezan.kommon.authsession.AuthTokenProvider
 import io.github.maniramezan.kommon.authsession.AuthUser
+import io.github.maniramezan.testcommons.CallRecorder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,8 +26,10 @@ public class FakeAuthRepository(
 
     public val passwordResetEmails: MutableList<String> = mutableListOf()
     public val signInLinkEmails: MutableList<String> = mutableListOf()
-    public var signOutCount: Int = 0
-        private set
+    private val signOutCalls = CallRecorder<Unit>()
+
+    public val signOutCount: Int
+        get() = signOutCalls.count
 
     override val currentUser: AuthUser? get() = user.value
     override val isAuthenticated: Boolean get() = user.value != null
@@ -64,7 +67,7 @@ public class FakeAuthRepository(
     ): Result<Unit> = attempt { signInLinkEmails += email }
 
     override fun signOut() {
-        signOutCount += 1
+        signOutCalls.record(Unit)
         user.value = null
     }
 
