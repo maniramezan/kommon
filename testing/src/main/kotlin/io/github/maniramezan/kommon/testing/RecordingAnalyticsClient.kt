@@ -2,6 +2,7 @@ package io.github.maniramezan.kommon.testing
 
 import io.github.maniramezan.kommon.analytics.AnalyticsClient
 import io.github.maniramezan.kommon.analytics.AnalyticsEvent
+import io.github.maniramezan.testcommons.CallRecorder
 
 /** In-memory [AnalyticsClient] fake that records every call, for consumer unit tests. */
 public class RecordingAnalyticsClient : AnalyticsClient {
@@ -28,10 +29,13 @@ public class RecordingAnalyticsClient : AnalyticsClient {
     /** The `token` passed to the most recent [initialize] call, or `null` if never initialized. */
     public var initializedToken: String? = null
         private set
-    public var wasReset: Boolean = false
-        private set
-    public var wasFlushed: Boolean = false
-        private set
+    private val resetCalls = CallRecorder<Unit>()
+    private val flushCalls = CallRecorder<Unit>()
+
+    public val wasReset: Boolean
+        get() = resetCalls.count > 0
+    public val wasFlushed: Boolean
+        get() = flushCalls.count > 0
 
     /** Names of every tracked event, in order — the most common assertion in consumer tests. */
     public val trackedEventNames: List<String>
@@ -71,10 +75,10 @@ public class RecordingAnalyticsClient : AnalyticsClient {
     }
 
     override fun reset() {
-        wasReset = true
+        resetCalls.record(Unit)
     }
 
     override fun flush() {
-        wasFlushed = true
+        flushCalls.record(Unit)
     }
 }
