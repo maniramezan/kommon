@@ -20,6 +20,7 @@ matching test in the same commit.
 | A pending delete stays deleted when acked with any non-blocked status | `applyOutcome` | `pending delete acknowledged...` |
 | Repeated server changes for a key merge in response order before batching | `ingestChanges` | `repeated changes in one page...` |
 | Writes are batched through `upsertAll` (acks, each page, tombstones) | `applyAck`, `ingestChanges`, `reconcileFullSnapshot` | `each page of server changes...` |
+| Reads are batched: one `reloadAll` per ack set, one `findExistingAll` per page (distinct keys) | `applyAck`, `ingestChanges` | `SyncEngineLookupBatchingTest` |
 | **Pagination drain**: follow `hasMore` using each page's cursor | `drive` | `delta pagination drains...`, `pagination requests each page...` |
 | **Non-advancing cursor guard**: `hasMore` with a missing/repeated cursor fails instead of looping | `drive` | `pagination guard fails...` |
 | `fullResyncRequired`: apply push acks, purge clean rows, re-pull from `since = null` | `fullResync`, `drive` | `full resync purges...`, `full resync applies push acks...` |
