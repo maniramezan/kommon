@@ -41,7 +41,8 @@ access is available, then pin the verified version in `gradle/libs.versions.toml
   bridge with an optional `ReleaseLogSink`), and a pure-Kotlin `isValidEmail()`. No other module
   dependencies.
 - `:sync` — the generic delta-sync engine: `SyncEngine`, `SyncResourceAdapter`, `SyncableEntity`/
-  `SyncState`, the `SyncRequest`/`SyncResponse` wire envelope, `SyncCursorStore`, `SyncTelemetrySink`.
+  `SyncState`, the `SyncRequest`/`SyncResponse` wire envelope, `SyncCursorStore`, `SyncTelemetrySink`,
+  and `SyncStatusTracker` (a sink exposing per-resource `SyncResourceStatus` as a `StateFlow`).
   Depends on `:foundation` only. This is the highest-value, most-tested module — treat its
   invariants (ack guard, pending guard, tombstone reconciliation, pagination drain + non-advancing
   cursor guard, per-resource isolation, cancellation transparency) as load-bearing; see the KDoc on
