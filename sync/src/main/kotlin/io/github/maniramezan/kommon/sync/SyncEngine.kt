@@ -213,11 +213,14 @@ public class SyncEngine(
         applied: List<SyncAppliedRecord>,
         pendingByKey: Map<String, E>,
     ) {
+        val matched = applied.mapNotNull { ack -> pendingByKey[ack.key]?.let { snapshot -> ack to snapshot } }
+        if (matched.isEmpty()) return
+        // One keyed read for the whole acknowledgement set instead of one reload per row.
+        val currentByKey = adapter.reloadAll(matched.map { it.second }.distinctBy { adapter.syncKey(it) })
         val acknowledged =
-            applied.mapNotNull { ack ->
-                val snapshot = pendingByKey[ack.key] ?: return@mapNotNull null
+            matched.mapNotNull { (ack, snapshot) ->
                 // Ack guard: if the row was edited mid-flight, leave it pending to re-push.
-                val current = adapter.reload(snapshot) ?: return@mapNotNull null
+                val current = currentByKey[adapter.syncKey(snapshot)] ?: return@mapNotNull null
                 if (current.localUpdatedAt != snapshot.localUpdatedAt) return@mapNotNull null
                 if (ack.status == SyncAppliedRecord.STATUS_BLOCKED || ack.status == SyncAppliedRecord.STATUS_REJECTED) {
                     reportTelemetry { telemetry.onItemBlocked(adapter.resourceName, ack.status, ack.reason) }
@@ -228,19 +231,23 @@ public class SyncEngine(
     }
 
     /**
-     * Applies one page's `serverChanges` in a single [SyncResourceAdapter.upsertAll] batch.
-     * Repeated keys are merged in response order before the final entity per key is written.
+     * Applies one page's `serverChanges` in a single [SyncResourceAdapter.upsertAll] batch, after
+     * one [SyncResourceAdapter.findExistingAll] lookup for the page's distinct keys. Repeated keys
+     * are merged in response order before the final entity per key is written.
      */
     private suspend fun <E : SyncableEntity<E>, U, D, C> ingestChanges(
         adapter: SyncResourceAdapter<E, U, D, C>,
         response: SyncResponse<C>,
         activeKeys: MutableSet<String>,
     ) {
+        val changes = response.serverChanges
+        if (changes.isEmpty()) return
+        val existingByKey = adapter.findExistingAll(changes.distinctBy { adapter.changeKey(it) })
         val incoming = linkedMapOf<String, E>()
-        response.serverChanges.forEach { change ->
+        changes.forEach { change ->
             val key = adapter.changeKey(change)
             if (!adapter.isChangeDeleted(change)) activeKeys += key
-            val existing = incoming[key] ?: adapter.findExisting(change)
+            val existing = incoming[key] ?: existingByKey[key]
             if (existing != null && existing.syncState != SyncState.SYNCED) return@forEach
             incoming[key] = adapter.toEntity(change, existing)
         }

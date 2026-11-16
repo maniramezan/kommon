@@ -27,6 +27,22 @@ public interface SyncResourceAdapter<E : SyncableEntity<E>, U, D, C> {
     /** Re-read the row for the ack guard (detects edits made during the in-flight request). */
     public suspend fun reload(entity: E): E?
 
+    /**
+     * Re-reads every acknowledged row of one push in a single call, keyed by [syncKey] of the
+     * given entity. Rows that no longer exist are omitted.
+     *
+     * The engine calls this once per acknowledgement set instead of [reload] once per row. The
+     * default delegates to [reload]; override it with one keyed query (for example
+     * `WHERE key IN (...)`) to avoid a database round trip per acknowledged row.
+     */
+    public suspend fun reloadAll(entities: List<E>): Map<String, E> {
+        val reloaded = LinkedHashMap<String, E>(entities.size)
+        for (entity in entities) {
+            reload(entity)?.let { reloaded[syncKey(entity)] = it }
+        }
+        return reloaded
+    }
+
     public suspend fun upsert(entity: E)
 
     /**
@@ -41,7 +57,24 @@ public interface SyncResourceAdapter<E : SyncableEntity<E>, U, D, C> {
         entities.forEach { upsert(it) }
     }
 
+    /** The local row a server change refers to, or `null` when it is new. Resolve it by [changeKey]. */
     public suspend fun findExisting(change: C): E?
+
+    /**
+     * Finds the local rows for one page of server changes in a single call, keyed by [changeKey].
+     * Changes without a local row are omitted. [changes] holds at most one change per key.
+     *
+     * The engine calls this once per response page instead of [findExisting] once per change. The
+     * default delegates to [findExisting]; override it with one keyed query to avoid a database
+     * round trip per server change.
+     */
+    public suspend fun findExistingAll(changes: List<C>): Map<String, E> {
+        val found = LinkedHashMap<String, E>(changes.size)
+        for (change in changes) {
+            findExisting(change)?.let { found[changeKey(change)] = it }
+        }
+        return found
+    }
 
     public fun changeKey(change: C): String
 

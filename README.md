@@ -59,7 +59,9 @@ cancelling the calling coroutine cancels the pass (it is never reported as a syn
 server that answers `hasMore = true` without advancing its cursor fails the pass instead of
 looping forever. A paginated full snapshot only persists its cursor after the last page is
 applied, so an interrupted snapshot restarts rather than resuming without reconciliation.
-Override `upsertAll` to write each page of changes in one database transaction. Repeated changes
+Override `upsertAll` to write each page of changes in one database transaction, and override
+`reloadAll` and `findExistingAll` to read each acknowledgement set and each page of changes with
+one keyed query instead of one query per row. Repeated changes
 for a key are merged in response order before the final row is written. The engine reads rows
 before invoking `upsertAll`; a transaction around that batch alone cannot prevent concurrent local
 edits from being overwritten. Adapters must enforce conditional writes against the current local
