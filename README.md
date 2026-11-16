@@ -7,7 +7,9 @@ authentication, analytics, remote-config, and telemetry SDKs.
 ## Requirements
 
 - Android library consumers using JDK 17 or newer.
-- Kotlin 2.4.x and Android Gradle Plugin 9.4.x are used to build this release.
+- Kotlin 2.4.x and Android Gradle Plugin 9.5.x are used to build this release (see
+  `gradle/libs.versions.toml` for exact pins).
+- `design-system` also publishes JVM, iOS, and Wasm targets.
 
 ## Modules
 
@@ -131,6 +133,24 @@ val otel = AnalyticsOpenTelemetryClient(analytics)
 val words = otel.trace("fetch_words", SpanKind.CLIENT, mapOf("deck" to deckId)) { api.fetchWords(deckId) }
 ```
 
+### Crash reporting
+
+Bridge `CrashlyticsClient` to your crash SDK and inject the interface. `NoOpCrashlyticsClient`
+fits builds without crash reporting; `RecordingCrashlyticsClient` records calls for tests.
+
+```kotlin
+class FirebaseCrashlyticsBridge(private val crashlytics: FirebaseCrashlytics) : CrashlyticsClient {
+    override fun setUserId(userId: String) = crashlytics.setUserId(userId)
+    override fun clearUserId() = crashlytics.setUserId("")
+    override fun recordError(throwable: Throwable, context: Map<String, String>) {
+        context.forEach(crashlytics::setCustomKey)
+        crashlytics.recordException(throwable)
+    }
+    override fun setCustomValue(key: String, value: String) = crashlytics.setCustomKey(key, value)
+    override fun log(message: String) = crashlytics.log(message)
+}
+```
+
 ### Remote config
 
 ```kotlin
@@ -174,6 +194,22 @@ MaterialTheme {
 Both screens also have stateless overloads that take the entries and callbacks directly, and every
 string is a parameter (`RemoteConfigDebugLabels`, `AnalyticsDebugLabels`) for localization.
 
+### Design system
+
+`design-system` holds platform-neutral tokens only; renderers such as Compose themes map them to
+their own types. Check contrast when defining a palette:
+
+```kotlin
+val theme = KommonDesignTokens.default
+val colors = theme.lightColors
+
+check(colors.onPrimary.contrastRatio(colors.primary) >= MIN_TEXT_CONTRAST)
+val padding = theme.spacing.medium
+val brand = ColorToken.rgb(red = 0x1E, green = 0x88, blue = 0xE5)
+```
+
+Optional color roles left `null` are derived by the renderer.
+
 ### Parsing
 
 ```kotlin
@@ -204,6 +240,19 @@ val alignment = TranscriptAlignment.align(
     heard = transcript.words.map { it.transcriptToken },
 )
 alignment.score
+```
+
+```kotlin
+val synthesizer = AndroidSpeechSynthesisSession(context)
+
+synthesizer.speak(SpeechSynthesisRequest(text = "Bonjour tout le monde", languageTag = "fr-FR")).collect { event ->
+    when (event) {
+        is SpeechSynthesisEvent.WillSpeak -> highlight(event.start until event.end)
+        SpeechSynthesisEvent.Finished, SpeechSynthesisEvent.Cancelled -> clearHighlight()
+        SpeechSynthesisEvent.Started -> Unit
+    }
+}
+synthesizer.close()   // releases the TextToSpeech engine
 ```
 
 `SpeechModelAssets.status(context, locale)` reports whether the on-device model is installed and
@@ -266,5 +315,4 @@ before merging workflow changes. Token creation runs before Maven publishing.
 
 If Maven publishing completes but GitHub tagging fails, recover the tag at the exact source commit
 from that publishing run and create its GitHub Release. A Maven version cannot be overwritten;
-rerunning publication for the same version will fail. Version `0.2.0` was recovered at
-`b7f83d6142a41ba4a7b6e6304dddf8e5778ff93c`, the commit used by its September 24 publishing run.
+rerunning publication for the same version will fail.
