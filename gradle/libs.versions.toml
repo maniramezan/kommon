@@ -1,5 +1,5 @@
 [versions]
-agp = "9.5.1"
+agp = "9.5.2"
 kotlin = "2.4.21"
 binaryCompatibilityValidator = "0.18.2"
 asm = "9.11.1"
@@ -17,8 +17,8 @@ composeMaterial3 = "1.4.0"
 ktlint = "14.2.0"
 mavenPublish = "0.37.0"
 mockk = "1.14.12"
-robolectric = "4.18"
-testcommons = "0.2.0"
+robolectric = "4.18.1"
+testcommons = "0.3.0"
 timber = "5.0.1"
 turbine = "1.2.1"
 
